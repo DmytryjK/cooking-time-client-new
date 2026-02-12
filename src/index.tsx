@@ -10,7 +10,7 @@ import "./styles/index.scss";
 const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
 root.render(
   <Provider store={store}>
-    <BrowserRouter>
+    <BrowserRouter future={{v7_startTransition: true,v7_relativeSplatPath: true}}>
       <Routes>
         <Route path="/" element={<Layout />}>
           {router.map((link) => {

@@ -329,7 +329,7 @@ export const recepieListSlice = createSlice({
     resetRecipes: (state) => {
       state.recipes = [];
       state.filteredRecipes = [];
-      state.recipe = null;
+      // state.recipe = null;
       state.loadingRecipes = "idle";
     },
     localRemoveRecipe: (state, action: PayloadAction<string | number>) => {

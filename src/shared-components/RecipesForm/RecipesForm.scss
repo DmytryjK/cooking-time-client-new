@@ -233,6 +233,8 @@
   }
 
   .addRecipe-btn {
+    position: sticky;
+    bottom: 10px;
     &__loading-dot {
       animation-delay: 0.1s;
       margin: 0 5px;
