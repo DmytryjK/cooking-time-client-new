@@ -2,13 +2,9 @@ import { useAppSelector, useAppDispatch } from "../../../hooks/hooks";
 import { setResetFiltersByName } from "../../../store/reducers/FiltersSlice";
 import "./SearchResults.scss";
 
-const SearchResults = () => {
+const SearchResults = ({ isEmpty }: { isEmpty: boolean }) => {
   const searchValue = useAppSelector((state) => state.recipes.searchedNameOfDishes);
   const tags = useAppSelector((state) => state.filters.searchTags);
-  const filteredRecipes = useAppSelector((state) => state.recipes.filteredRecipes);
-  const filteredFavoriteRecipes = useAppSelector((state) => state.favoriteRecipes.filteredFavoriteRecipes);
-  const isRequestCorrect = filteredRecipes.length > 0 || filteredFavoriteRecipes.length > 0;
-
   const dispatch = useAppDispatch();
 
   const renderResults = () => {
@@ -34,11 +30,7 @@ const SearchResults = () => {
           ) : (
             ""
           )}
-          {isRequestCorrect ? (
-            ""
-          ) : (
-            <span className="search-results__wrong-request">нажаль ми нічого не знайшли :(</span>
-          )}
+          {isEmpty && <span className="search-results__wrong-request">нажаль ми нічого не знайшли :( </span>}
         </div>
       );
     }

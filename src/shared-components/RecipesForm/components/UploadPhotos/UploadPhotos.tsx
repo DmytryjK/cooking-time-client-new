@@ -1,9 +1,10 @@
+import { LoadedPhotos } from "../../RecipesForm";
 import PhotoField from "./PhotoField/PhotoField";
 
-type PhotoFieldType = {
+export type PhotoFieldType = {
   name: string;
   maxSize?: string;
-  id: string;
+  id: keyof LoadedPhotos;
 };
 
 const UploadPhotos = () => {
@@ -11,7 +12,7 @@ const UploadPhotos = () => {
     {
       name: "Фотографія мініатюри",
       maxSize: "1000",
-      id: "previewImg",
+      id: "preview",
     },
     {
       name: "Основна фотографія",

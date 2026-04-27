@@ -1,16 +1,18 @@
 import { useEffect, useState, useRef } from "react";
 import { m, LazyMotion, domAnimation } from "framer-motion";
 import { useAppDispatch, useAppSelector } from "../../../hooks/hooks";
-import { deleteRecipe, localRemoveRecipe } from "../../../store/reducers/RecipesListSlice";
-import { localRemoveFavoriteRecipe } from "../../../store/reducers/FavoritesRecipesSlice";
+// import { localRemoveRecipe } from "../../../store/reducers/RecipesListSlice";
 import loader from "../../../assets/icons/loader/loader.svg";
+import { useDeleteRecipe } from "../../../queries/delete-recipe/delete-recipe.mutation";
 
-const RemoveRecipeByAdmin = ({ id }: { id: string | number | null }) => {
+const RemoveRecipeByAdmin = ({ id }: { id: string }) => {
   const [isRemoveActive, setIsRemoveActive] = useState(false);
   const notesRef = useRef<HTMLDivElement>(null);
-  const { isAdmin } = useAppSelector((state) => state.authentication.user);
+  const { role } = useAppSelector((state) => state.authentication.user) || {};
+  const isAdmin = role === "admin";
   const removeRecipeLoading = useAppSelector((state) => state.recipes.removeRecipeLoading);
   const dispatch = useAppDispatch();
+  const { mutateAsync: deleteRecipe } = useDeleteRecipe();
 
   const variants = {
     open: {
@@ -46,11 +48,11 @@ const RemoveRecipeByAdmin = ({ id }: { id: string | number | null }) => {
   }, [isRemoveActive]);
 
   const handledeleteRecipe = () => {
-    if (!id) return;
-    dispatch(deleteRecipe(id)).then(() => {
-      dispatch(localRemoveRecipe(id));
-      dispatch(localRemoveFavoriteRecipe(id));
-    });
+    deleteRecipe(id);
+    // dispatch(deleteRecipe(id)).then(() => {
+    //   dispatch(localRemoveRecipe(id));
+    //   dispatch(localRemoveFavoriteRecipe(id));
+    // });
   };
 
   return (

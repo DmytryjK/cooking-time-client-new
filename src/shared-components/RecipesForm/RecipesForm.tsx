@@ -1,152 +1,96 @@
 import { useState, useEffect, createContext, Dispatch, SetStateAction, useMemo } from "react";
-import { getDownloadURL, ref, uploadBytes, deleteObject } from "firebase/storage";
 import ReactQuill from "react-quill";
 import ImageCompress from "quill-image-compress";
-import nextId from "react-id-generator";
-import Compressor from "compressorjs";
 import { useAppDispatch, useAppSelector } from "../../hooks/hooks";
-import { storage } from "../../firebase/firebase";
 import Ingredients from "./components/Ingredients/Ingredients";
 import UploadPhotos from "./components/UploadPhotos/UploadPhotos";
 import CustomSelect from "../CustomSelect/CustomSelect";
-import { resetFavoriteRecipes } from "../../store/reducers/FavoritesRecipesSlice";
-import { UploadFileType, IngredientsType, Loading } from "../../types/type";
-import { postRecipe, updateRecipe, resetLoadingForm, resetRecipes } from "../../store/reducers/RecipesListSlice";
-import { clearAllTags, getCategories } from "../../store/reducers/CreateRecipeFormSlice";
+import { UploadFileType, Loading, Category, Recipe } from "../../types/type";
+import { clearAllTags } from "../../store/reducers/CreateRecipeFormSlice";
+
+import { useGetCategories } from "../../queries/get-categories/get-recipes.query";
+import { useCreateRecipe } from "../../queries/post-create-recipe/post-create-recipe.mutation";
 import "./RecipesForm.scss";
 import "react-quill/dist/quill.snow.css";
+import { useUpdateRecipe } from "../../queries/put-update-recipe/put-update-recipe.mutation";
+import { PutUpdateRecipeReq } from "../../api/put-update-recipe/put-update-recipe.type";
 
 type Props = {
-  id: string | number | null;
-  isFavorite?: boolean;
-  title?: string;
-  categoryName?: string;
-  timer?: { hours: string; minutes: string };
-  descr?: string;
-  loadedPhotos?: LoadedPhotoType[];
-  ingredients?: IngredientsType[] | undefined;
   method: "POST" | "UPDATE";
+  recipe?: Recipe;
+  onSuccess?: () => void;
 };
 
 type LoadedPhotoType = {
   id: string;
-  loadedSrc: string;
-  localSrc: string;
+  src: string;
   srcForRemove?: string;
   uploadFile?: UploadFileType | any;
 };
 
+export interface LoadedPhotos {
+  main?: LoadedPhotoType;
+  preview?: LoadedPhotoType;
+}
+
 type LoadedPhotoContextType = {
-  loadedPhotosInfo: LoadedPhotoType[];
-  setLoadedPhotosInfo: Dispatch<SetStateAction<LoadedPhotoType[]>>;
+  loadedPhotosInfo: LoadedPhotos | undefined;
+  setLoadedPhotosInfo: Dispatch<SetStateAction<LoadedPhotos | undefined>>;
 };
 
 export const LoadedPhotoContext = createContext<LoadedPhotoContextType>({
-  loadedPhotosInfo: [],
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  setLoadedPhotosInfo: () => {},
+  loadedPhotosInfo: undefined,
+  setLoadedPhotosInfo: () => undefined,
 });
 
 ReactQuill.Quill.register("modules/imageCompress", ImageCompress);
 
-const RecipesForm = (props: Props) => {
-  const { id, title, categoryName, timer, descr, loadedPhotos, ingredients, isFavorite, method } = props;
+const RecipesForm = ({ recipe, method, onSuccess }: Props) => {
+  const {
+    id,
+    title,
+    category,
+    cookingTimeInMinutes,
+    description: recipeDescription,
+    images,
+    ingredients,
+  } = recipe || {};
+  const mainPhoto = images?.find((img) => img.type === "MAIN")?.imageUrl;
+  const previewPhoto = images?.find((img) => img.type === "PREVIEW")?.imageUrl;
+  const initialPhotosState = {
+    ...(mainPhoto ? { main: { id: "main", src: mainPhoto } } : {}),
+    ...(previewPhoto ? { preview: { id: "preview", src: previewPhoto } } : {}),
+  };
+
+  const { mutateAsync: createRecipe, isPending: isCreating } = useCreateRecipe({ onSuccess });
+  const { mutateAsync: updateRecipe, isPending: isUpdating } = useUpdateRecipe({ onSuccess });
 
   const { loadingForm } = useAppSelector((state) => state.recipes);
   const [nameValue, setNameValue] = useState(title || "");
-  const [categoryValue, setCategoryValue] = useState(categoryName || "");
-  const [timerValue, setTimerValue] = useState(timer || { hours: "", minutes: "" });
-  const [description, setDescription] = useState(descr || "");
-  const [loadedPhotosInfo, setLoadedPhotosInfo] = useState<LoadedPhotoType[]>(loadedPhotos || []);
-  const [uploadPhotoLoading, setUploadPhotoLoading] = useState<Loading>("idle");
+  const [categoryValue, setCategoryValue] = useState<Category | undefined>(() => category);
+  const [timerValue, setTimerValue] = useState({
+    hours: cookingTimeInMinutes ? Math.floor(cookingTimeInMinutes / 60) : 0,
+    minutes: cookingTimeInMinutes ? cookingTimeInMinutes % 60 : 0,
+  });
+  const [description, setDescription] = useState(recipeDescription || "");
+  const [loadedPhotosInfo, setLoadedPhotosInfo] = useState<LoadedPhotos | undefined>(initialPhotosState);
 
   const tags = useAppSelector((state) => state.createRecipeForm.tags);
-  const { categories } = useAppSelector((state) => state.createRecipeForm);
-  const { uid } = useAppSelector((state) => state.authentication.user);
+  const { data: categories } = useGetCategories({});
+  const user = useAppSelector((state) => state.authentication.user) || {};
 
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    dispatch(getCategories());
-  }, [dispatch]);
-
-  useEffect(() => {
-    if (loadingForm === "succeeded") {
-      dispatch(resetLoadingForm());
-      dispatch(resetRecipes());
-      dispatch(resetFavoriteRecipes());
-    }
-  }, [loadingForm]);
-
-  useEffect(() => {
     if (loadingForm === "succeeded" && method === "POST") {
       setNameValue("");
-      setCategoryValue("");
+      setCategoryValue(undefined);
       dispatch(clearAllTags());
-      setLoadedPhotosInfo([]);
+      setLoadedPhotosInfo(undefined);
       setDescription("");
-      setTimerValue({ hours: "", minutes: "" });
+      setTimerValue({ hours: 0, minutes: 0 });
     }
   }, [loadingForm]);
-
-  const uploadPhotos = async (loadedPhotosInfo: LoadedPhotoType[]) => {
-    setUploadPhotoLoading("pending");
-    const data: LoadedPhotoType[] = [];
-    const uploadPhotoPromises = loadedPhotosInfo.map(async (item) => {
-      const { id, loadedSrc, uploadFile, srcForRemove } = item;
-      if (srcForRemove) {
-        const imageRef = ref(storage, `${item.srcForRemove}`);
-        const url = await getDownloadURL(imageRef);
-        if (url) {
-          const imageRef = ref(storage, `${item.srcForRemove}`);
-          const removePhoto = await deleteObject(imageRef);
-        }
-      }
-      if (uploadFile) {
-        let compressedFile: any;
-        const compressImage = async () => {
-          return new Promise((resolve, reject) => {
-            const compressor = new Compressor(uploadFile, {
-              quality: 0.9,
-              maxWidth: id === "main" ? 800 : 450,
-              maxHeight: id === "main" ? 600 : 370,
-              success(result) {
-                compressedFile = result;
-                resolve(result);
-              },
-              error(err) {
-                reject(err.message);
-              },
-            });
-          });
-        };
-        const image = await compressImage();
-        const imageRef = ref(storage, `recipes/${nextId(`photo-${id}`)}-${compressedFile.name}`);
-        const snapshot = await uploadBytes(imageRef, compressedFile);
-        const reflink = await getDownloadURL(snapshot.ref);
-        data.push({
-          id,
-          loadedSrc: reflink,
-          localSrc: "",
-          srcForRemove: "",
-        });
-      } else {
-        data.push({
-          id,
-          loadedSrc,
-          localSrc: "",
-          srcForRemove: "",
-        });
-      }
-
-      return Promise.resolve();
-    });
-
-    return Promise.all(uploadPhotoPromises).then(() => {
-      setUploadPhotoLoading("succeeded");
-      return data;
-    });
-  };
 
   const handleSubmitForm = async (method: string) => {
     if (!nameValue) {
@@ -165,73 +109,45 @@ const RecipesForm = (props: Props) => {
       alert("Вкажіть час приготування страви");
       return;
     }
-    if (loadedPhotosInfo.length < 2) {
-      alert("Завантажте 2 фото");
-      return;
-    }
     if (!description) {
       alert("Опишіть процес приготування страви");
       return;
     }
 
-    try {
-      const updatedPhotosInfo = await uploadPhotos(loadedPhotosInfo);
-      if (!updatedPhotosInfo) return;
-      if (method === "POST") {
-        dispatch(
-          postRecipe({
-            id: "",
-            authorId: uid || "",
-            title: nameValue,
-            time: {
-              hours: timerValue.hours ? `${timerValue.hours}` : "",
-              minutes: timerValue.minutes ? `${timerValue.minutes}` : "",
-            },
-            ingredients: tags,
-            description,
-            imgDto: [
-              {
-                id: updatedPhotosInfo[0].id,
-                src: updatedPhotosInfo[0].loadedSrc,
-              },
-              {
-                id: updatedPhotosInfo[1].id,
-                src: updatedPhotosInfo[1].loadedSrc,
-              },
-            ],
-            favorites: false,
-            category: categoryValue,
-          }),
-        );
-      } else if (method === "UPDATE") {
-        dispatch(
-          updateRecipe({
-            id,
-            authorId: uid || "",
-            title: nameValue,
-            time: {
-              hours: timerValue.hours ? `${timerValue.hours}` : "",
-              minutes: timerValue.minutes ? `${timerValue.minutes}` : "",
-            },
-            ingredients: tags,
-            description,
-            imgDto: [
-              {
-                id: updatedPhotosInfo[0].id,
-                src: updatedPhotosInfo[0].loadedSrc,
-              },
-              {
-                id: updatedPhotosInfo[1].id,
-                src: updatedPhotosInfo[1].loadedSrc,
-              },
-            ],
-            favorites: isFavorite || false,
-            category: categoryValue,
-          }),
-        );
+    if (method === "POST") {
+      if (!loadedPhotosInfo || !loadedPhotosInfo.main || !loadedPhotosInfo.preview) {
+        alert("Завантажте 2 фото");
+        return;
       }
-    } catch (error) {
-      console.error("Error uploading photos:", error);
+      createRecipe(
+        {
+          title: nameValue,
+          ingredients: tags,
+          description,
+          categoryId: categoryValue.id,
+          cookingTimeInMinutes: +timerValue.hours * 60 + +timerValue.minutes,
+          previewImage: loadedPhotosInfo.preview.uploadFile,
+          mainImage: loadedPhotosInfo.main.uploadFile,
+        },
+        user,
+      );
+    }
+    if (method === "UPDATE" && id) {
+      const newMain = loadedPhotosInfo?.main?.uploadFile;
+      const newPreview = loadedPhotosInfo?.preview?.uploadFile;
+
+      const newRecipe: PutUpdateRecipeReq = {
+        ...recipe,
+        title: nameValue,
+        ingredients: tags,
+        description,
+        categoryId: categoryValue.id,
+        cookingTimeInMinutes: +timerValue.hours * 60 + +timerValue.minutes,
+        ...(newMain && { mainImage: newMain }),
+        ...(newPreview && { previewImage: newPreview }),
+      };
+
+      updateRecipe({ id, body: newRecipe });
     }
   };
 
@@ -278,8 +194,9 @@ const RecipesForm = (props: Props) => {
             value={categoryValue}
             initialCheckedValue={categoryValue}
             setValue={setCategoryValue}
-            fieldValues={categories}
+            fieldValues={categories || []}
             selectTitle="Оберіть категорію"
+            getLabel={(cat) => cat.name}
           />
         </div>
       </div>
@@ -302,8 +219,8 @@ const RecipesForm = (props: Props) => {
                   }
                   setTimerValue((prev) => {
                     return {
-                      minutes: prev?.minutes || "",
-                      hours: value,
+                      minutes: prev?.minutes || 0,
+                      hours: +value,
                     };
                   });
                 }}
@@ -326,8 +243,8 @@ const RecipesForm = (props: Props) => {
                   }
                   setTimerValue((prev) => {
                     return {
-                      hours: prev?.hours || "",
-                      minutes: value,
+                      hours: prev?.hours || 0,
+                      minutes: +value,
                     };
                   });
                 }}
@@ -373,14 +290,9 @@ const RecipesForm = (props: Props) => {
           onChange={setDescription}
         />
       </div>
-      <button
-        className={`form__submit addRecipe-btn ${
-          loadingForm === "pending" || uploadPhotoLoading === "pending" ? "loading" : ""
-        }`}
-        type="submit"
-      >
+      <button className={`form__submit addRecipe-btn ${isCreating || isUpdating ? "loading" : ""}`} type="submit">
         {method === "POST" ? "Додати рецепт" : "Оновити рецепт"}
-        {loadingForm === "pending" || uploadPhotoLoading === "pending" ? (
+        {isCreating || isUpdating ? (
           <span className="addRecipe-btn__loading-dots">
             <span className="addRecipe-btn__loading-dot" />
             <span className="addRecipe-btn__loading-dot" />

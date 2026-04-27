@@ -1,29 +1,24 @@
 import { useEffect, useState } from "react";
-import { signOut } from "firebase/auth";
+import { PAGE_ROUTES } from "../../config/page-routes";
 import { NavLink, useLocation } from "react-router-dom";
 import SearchForm from "./SearchForm/SearchForm";
-import { auth } from "../../firebase/firebase";
-import { createUser } from "../../store/reducers/AuthenticationSlice";
+import { removeUser, setUser } from "../../store/reducers/AuthenticationSlice";
 import { useAppSelector, useAppDispatch } from "../../hooks/hooks";
-import { resetFavoriteRecipes } from "../../store/reducers/FavoritesRecipesSlice";
-import { resetRecipes } from "../../store/reducers/RecipesListSlice";
 import logo from "../../assets/icons/logo.svg";
 import BurgerBtn from "./BurgerBtn/BurgerBtn";
 import "./Header.scss";
+import { useSignOut } from "../../queries/post-sign-out/post-sign-out.mutation";
+import Cookies from "js-cookie";
 
 const Header = () => {
-  const { uid, email } = useAppSelector((state) => state.authentication.user);
-  const [userAuthToLocalStorage, setUserAuthToLocalStorage] = useState<string | null>(null);
+  const { id: uid, email } = useAppSelector((state) => state.authentication.user) || {};
   const [isShouldRenderSearch, setIsShouldRenderSearch] = useState(true);
   const [isBurgerOpen, setIsBurgerOpen] = useState(false);
+  const { mutateAsync: logout } = useSignOut();
 
   const dispatch = useAppDispatch();
   const savedUser = localStorage.getItem("user");
   const { pathname } = useLocation();
-
-  useEffect(() => {
-    setUserAuthToLocalStorage(savedUser);
-  }, [savedUser]);
 
   useEffect(() => {
     if (pathname === "/" || pathname === "/favorites") {
@@ -35,22 +30,12 @@ const Header = () => {
 
   useEffect(() => {
     if (!uid && savedUser) {
-      dispatch(createUser(JSON.parse(savedUser)));
+      dispatch(setUser(JSON.parse(savedUser)));
     }
   }, [uid, savedUser, dispatch]);
 
   const handleLogout = () => {
-    signOut(auth)
-      .then(() => {
-        localStorage.clear();
-        setUserAuthToLocalStorage(null);
-        dispatch(createUser({ uid: "", email: "", emailVerified: null }));
-        dispatch(resetFavoriteRecipes());
-        dispatch(resetRecipes());
-      })
-      .catch((error) => {
-        console.log("error when u try sign out");
-      });
+    logout();
   };
 
   return (
@@ -105,12 +90,12 @@ const Header = () => {
                 <strong>{email.substring(0, email.indexOf("@"))}</strong>
               </span>
             )}
-            {userAuthToLocalStorage ? (
+            {uid ? (
               <button onClick={handleLogout} type="button" className="logout__btn">
                 Вийти
               </button>
             ) : (
-              <NavLink className="login__link" to="/auth-login">
+              <NavLink className="login__link" to={PAGE_ROUTES.LOGIN}>
                 {" "}
                 Увійти | Зареєструватись
               </NavLink>

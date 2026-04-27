@@ -1,35 +1,36 @@
 import { useState, useEffect, ChangeEvent, useCallback } from "react";
 import { useAppDispatch, useAppSelector } from "../../../hooks/hooks";
-import { filterRecipes } from "../../../store/reducers/RecipesListSlice";
 import { activeCategories } from "../../../store/reducers/FiltersSlice";
 import debounce from "../../../helpers/debounce";
 import "./SortByCategories.scss";
+import { useGetCategories } from "../../../queries/get-categories/get-recipes.query";
 
 const SortByCategories = ({ currentPage }: { currentPage: "MAIN" | "FAVORITES" }) => {
   const [isSelectActive, setIsSelectActive] = useState<boolean>(false);
   const [isFilterActive, setIsFilterActive] = useState<boolean>(false);
   const { searchInput, searchTags, searchCategories } = useAppSelector((state) => state.filters);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const recipes = useAppSelector((state) => state.recipes.recipes);
-  const favoriteRecipes = useAppSelector((state) => state.favoriteRecipes.favoriteRecipes);
-  const [listOfCategories, setListOfCategories] = useState<string[]>([]);
+  // const recipes = useAppSelector((state) => state.recipes.recipes);
+  // const favoriteRecipes = useAppSelector((state) => state.favoriteRecipes.favoriteRecipes);
+  // const [listOfCategories, setListOfCategories] = useState<string[]>([]);
+  const { data: listOfCategories } = useGetCategories({});
   const dispatch = useAppDispatch();
 
   const debounceFilter = useCallback(
     debounce((searchInput, searchTags, searchCategories) => {
-      dispatch(filterRecipes({ searchInput, searchTags, searchCategories }));
+      // dispatch(filterRecipes({ searchInput, searchTags, searchCategories }));
     }, 400),
     [],
   );
 
-  useEffect(() => {
-    if (currentPage === "MAIN" && recipes.length > 0) {
-      setListOfCategories(Array.from(new Set(recipes.map((recipe) => recipe.category))));
-    }
-    if (currentPage === "FAVORITES" && favoriteRecipes.length > 0) {
-      setListOfCategories(Array.from(new Set(favoriteRecipes.map((recipe) => recipe.category))));
-    }
-  }, [recipes, favoriteRecipes]);
+  // useEffect(() => {
+  //   if (currentPage === "MAIN" && recipes.length > 0) {
+  //     setListOfCategories(Array.from(new Set(recipes.map((recipe) => recipe.category.name))));
+  //   }
+  //   if (currentPage === "FAVORITES" && favoriteRecipes.length > 0) {
+  //     setListOfCategories(Array.from(new Set(favoriteRecipes.map((recipe) => recipe.category.name))));
+  //   }
+  // }, [recipes, favoriteRecipes]);
 
   const closeSelect = (e: any) => {
     if (!e.target.closest(".sort__custom-fields") && !e.target.closest(".sort__custom-select")) {
@@ -72,22 +73,22 @@ const SortByCategories = ({ currentPage }: { currentPage: "MAIN" | "FAVORITES" }
         </button>
         <fieldset className="sort__custom-fields">
           {" "}
-          {listOfCategories.map((category, index) => {
+          {listOfCategories?.map((category) => {
             return (
-              <div className="sort__field" key={`category-sort-${category}`}>
+              <div className="sort__field" key={`category-sort-${category.id}`}>
                 <input
                   className="sort__input"
-                  id={`sort-${category}`}
+                  id={`sort-${category.id}`}
                   type="checkbox"
-                  value={category}
-                  checked={selectedCategories.some((selectedName) => selectedName === category)}
+                  value={category.id}
+                  checked={selectedCategories.some((id) => id === category.id)}
                   onClick={() => {
                     setIsFilterActive(true);
                   }}
                   onChange={toggleCategories}
                 />
-                <label className="sort__label" htmlFor={`sort-${category}`}>
-                  {category}
+                <label className="sort__label" htmlFor={`sort-${category.id}`}>
+                  {category.name}
                 </label>
                 <span className="sort__input-custom" />
               </div>

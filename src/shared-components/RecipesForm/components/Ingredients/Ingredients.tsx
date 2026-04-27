@@ -69,10 +69,10 @@ const Ingredients = ({ localingredients }: { localingredients: IngredientsType[]
               if (
                 ingredients.some(
                   (ingredient, ingIndex) =>
-                    ingredient.tagText.toLowerCase() === item.tagText.toLowerCase() && ingIndex !== index,
+                    ingredient.name.toLowerCase() === item.name.toLowerCase() && ingIndex !== index,
                 )
               ) {
-                return item.tagText.toLowerCase();
+                return item.name.toLowerCase();
               }
               return null;
             })
@@ -96,9 +96,9 @@ const Ingredients = ({ localingredients }: { localingredients: IngredientsType[]
     dispatch(
       addIngredientTags({
         id: nextId(`ingredient-${tagName}`),
-        tagText: tagName,
-        tagQuantityWithUnit: "",
-        tagUnit: "",
+        name: tagName,
+        amount: 0,
+        unit: "",
       }),
     );
     setTagName("");

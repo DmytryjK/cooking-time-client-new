@@ -301,4 +301,10 @@
       }
     }
   }
+
+  .product-tags__item.matched {
+    background: rgb(255, 237, 239);
+    color: rgb(76, 76, 76);
+    border: 1px solid rgb(223, 191, 195);
+  }
 }

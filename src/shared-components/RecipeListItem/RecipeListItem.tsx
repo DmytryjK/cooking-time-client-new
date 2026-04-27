@@ -4,19 +4,18 @@ import useEmblaCarousel from "embla-carousel-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { easeOut, LazyMotion, m, domMax } from "framer-motion";
 import RemoveRecipeByAdmin from "./RemoveRecipeByAdmin/RemoveRecipeByAdmin";
-import { Recipe } from "../../types/type";
-import { useAppDispatch, useAppSelector } from "../../hooks/hooks";
-import type { IngredientsType } from "../../types/type";
+import { ImageType, Recipe } from "../../types/type";
+import { useAppSelector } from "../../hooks/hooks";
 import "./RecipeListItem.scss";
 
-type HandleAddToFavorite = (recepieId: string | number | null, item: Recipe) => void;
+type HandleAddToFavorite = (recipeId: string, isFavorite: boolean) => void;
 
 const RecipeListItem = ({
   recipe,
   addToFavorite,
   index,
   setIsCardAnimateEnd,
-  className,
+  className = "",
 }: {
   recipe: Recipe;
   addToFavorite: HandleAddToFavorite;
@@ -24,73 +23,22 @@ const RecipeListItem = ({
   setIsCardAnimateEnd?: Dispatch<SetStateAction<boolean>>;
   className?: string;
 }) => {
-  const { ingredients, id, title, time, imgDto, favorites, category } = recipe;
-  const previewImg = imgDto.find((img) => img.id === "previewImg");
-  const timerClass = time ? "recipe-card__timer active" : "recipe-card__timer";
-  const { uid, isAdmin } = useAppSelector((state) => state.authentication.user);
+  const { ingredients, id, title, cookingTimeInMinutes, images, isFavorite, category } = recipe;
+  const previewImg = images?.find((img) => img.type === ImageType.preview);
+  const timerClass = cookingTimeInMinutes ? "recipe-card__timer active" : "recipe-card__timer";
+  const { id: uid, role } = useAppSelector((state) => state.authentication.user) || {};
+  const isAdmin = role === "admin";
   const searchedTagFilled = useAppSelector((state) => state.recipes.searchedTagFilled);
   const navigate = useNavigate();
   const noderef = useRef(null);
   const [emblaRef] = useEmblaCarousel({ dragFree: true, duration: 1 });
-  const dispatch = useAppDispatch();
-
-  const renderedTags = () => {
-    if (!ingredients) return "";
-    let result: JSX.Element | JSX.Element[] = <span />;
-    result = ingredients.map((item) => {
-      return (
-        <li key={`item-tagtext-${item.id}`} className="product-tags__item embla__slide">
-          {item.tagText}
-        </li>
-      );
-    });
-    if (searchedTagFilled.length > 0) {
-      const indexesOfIngredients = ingredients
-        .map((ingredient, index) => {
-          let result = null;
-          if (
-            searchedTagFilled.some((searchTag) => {
-              if (ingredient.tagText.toLowerCase().includes(searchTag.recipeIngredient.toLowerCase())) {
-                return true;
-              }
-              return false;
-            })
-          ) {
-            result = index;
-          }
-          return result;
-        })
-        .filter((item) => item !== null);
-      let copiedIngredients: IngredientsType[] = JSON.parse(JSON.stringify(ingredients));
-      indexesOfIngredients.forEach((itemIndex) => {
-        copiedIngredients = copiedIngredients.filter((copyIngredient) => {
-          if (copyIngredient.tagText !== ingredients[itemIndex as number].tagText) {
-            return true;
-          }
-          return false;
-        });
-        copiedIngredients.unshift(ingredients[itemIndex as number]);
-      });
-      result = copiedIngredients.map((item, index) => {
-        return (
-          <li
-            key={`item-tagtext-${item.id}`}
-            className={`product-tags__item embla__slide ${
-              index < indexesOfIngredients.length ? "product-tags__item_searched" : ""
-            }`}
-          >
-            {item.tagText}
-          </li>
-        );
-      });
-    }
-    return result;
-  };
+  const hours = Math.floor(cookingTimeInMinutes / 60);
+  const minutes = cookingTimeInMinutes % 60;
 
   return (
     <LazyMotion features={domMax} strict>
       <m.div
-        className={`recipe-card ${className || ""}`}
+        className={`recipe-card ${className}`}
         ref={noderef}
         initial={{ opacity: 0.5, y: 15, scale: 0.96, display: "none" }}
         layout
@@ -122,39 +70,45 @@ const RecipeListItem = ({
       >
         <RemoveRecipeByAdmin id={id} />
         <div className="recipe-card__wrapper">
-          <NavLink className="recipe-card__img-wrapper" to={`/about-recepie/${id}`}>
+          <NavLink className="recipe-card__img-wrapper" to={`/about-recipe/${id}`}>
             <LazyLoad width={290} height={290}>
-              <img className="recipe-card__image" width={290} height={290} src={previewImg?.src || ""} alt={title} />
+              <img
+                className="recipe-card__image"
+                width={290}
+                height={290}
+                src={previewImg?.imageUrl || ""}
+                alt={title}
+              />
             </LazyLoad>
           </NavLink>
           <div className="recipe-card__content-text">
             <h2 className="recipe-card__title" title={title}>
-              <NavLink to={`/about-recepie/${id}`}>
-                {title.length > 42 ? `${title.substring(0, 42)}...` : title}
-              </NavLink>
+              <NavLink to={`/about-recipe/${id}`}>{title.length > 42 ? `${title.substring(0, 42)}...` : title}</NavLink>
             </h2>
             <div className="recipe-card__inner-wrapper">
-              {time.hours === "" && time.minutes === "" ? (
-                ""
-              ) : (
-                <span className={timerClass}>
-                  {time.hours ? `${time.hours} год` : ""} {time.minutes ? `${time.minutes} хв` : ""}
-                </span>
-              )}
+              <span className={timerClass}>
+                {hours > 0 && `${hours} год`} {minutes > 0 && `${minutes} хв`}
+              </span>
               <div className="recipe-card__product-tags-slider embla" ref={emblaRef}>
-                <ul className="recipe-card__product-tags product-tags embla__container">{renderedTags() || null}</ul>
+                <ul className="recipe-card__product-tags product-tags embla__container">
+                  {ingredients?.map((item) => (
+                    <li key={item.id} className={`product-tags__item embla__slide ${item.matched ? "matched" : ""}`}>
+                      {item.name}
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
           </div>
-          <div className="recipe-card__current-category">{category}</div>
+          <div className="recipe-card__current-category">{category.name}</div>
         </div>
         <button
-          className={favorites ? "recipe-card__favorite-btn active" : "recipe-card__favorite-btn"}
+          className={isFavorite ? "recipe-card__favorite-btn active" : "recipe-card__favorite-btn"}
           type="button"
           aria-label="додати в обране"
           onClick={() => {
             if (uid) {
-              addToFavorite(id, recipe);
+              addToFavorite(id, recipe.isFavorite);
             } else {
               navigate("/favorites");
             }

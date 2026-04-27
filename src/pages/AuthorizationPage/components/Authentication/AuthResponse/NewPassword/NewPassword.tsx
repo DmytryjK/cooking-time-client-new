@@ -1,4 +1,5 @@
 import { useCallback, useState, useRef, FormEvent, Dispatch, SetStateAction } from "react";
+import { PAGE_ROUTES } from "../../../../../../config/page-routes";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { getAuth, verifyPasswordResetCode, confirmPasswordReset } from "firebase/auth";
 import type { Auth } from "firebase/auth";
@@ -56,7 +57,7 @@ const NewPassword = ({
                   text: [`Увійдіть, використовуючи нові дані`],
                   status: "SUCCESS",
                 });
-                navigate("/auth-login");
+                navigate(PAGE_ROUTES.LOGIN);
               }, 1000);
             })
             .catch((error) => {

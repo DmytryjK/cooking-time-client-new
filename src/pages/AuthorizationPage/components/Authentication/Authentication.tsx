@@ -1,24 +1,16 @@
 import { FC, useState, useEffect, useRef, useCallback } from "react";
+import { PAGE_ROUTES } from "../../../../config/page-routes";
 import { useNavigate, useLocation } from "react-router-dom";
-import nextId from "react-id-generator";
-import {
-  getAuth,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  GoogleAuthProvider,
-  signInWithPopup,
-  sendEmailVerification,
-  sendPasswordResetEmail,
-  signOut,
-} from "firebase/auth";
-import { createUser } from "../../../../store/reducers/AuthenticationSlice";
 import { useAppDispatch } from "../../../../hooks/hooks";
 import AuthLogin from "./AuthLogin/AuthLogin";
 import AuthRegister from "./AuthRegister/AuthRegister";
 import ForgotPassword from "./ForgotPassword/ForgotPassword";
 import AuthResponse from "./AuthResponse/AuthResponse";
 import "./Authentication.scss";
-import { resetFavoriteRecipes } from "../../../../store/reducers/FavoritesRecipesSlice";
+import { useSignUp } from "../../../../queries/post-sign-up/post-sign-up.mutation";
+import { useSignIn } from "../../../../queries/post-sign-in/post-sign-in.mutation";
+import Cookies from "js-cookie";
+import { setUser } from "../../../../store/reducers/AuthenticationSlice";
 
 type AuthorizationPageProps = {
   register?: boolean;
@@ -37,7 +29,7 @@ const Authentication: FC<AuthorizationPageProps> = ({ register, login, forgotPas
   const { pathname } = useLocation();
   const [inputMail, setInputMail] = useState<string>("");
   const [inputPass, setInputPass] = useState<string>("");
-  const [isLoading, setIsLoading] = useState(false);
+  // const [isLoading, setIsLoading] = useState(false);
   const [isStateTextActionChange, setIsStateTextActionChange] = useState(true);
   const loginByEmailPassInput = useRef<HTMLInputElement>(null);
   const signUpByEmailPassInput = useRef<HTMLInputElement>(null);
@@ -45,10 +37,12 @@ const Authentication: FC<AuthorizationPageProps> = ({ register, login, forgotPas
     text: [""],
     status: "",
   });
+  const { mutateAsync: signUp, isPending: signUpPending } = useSignUp();
+  const { mutateAsync: signIn, isPending: signInPending } = useSignIn();
 
   const dispatch = useAppDispatch();
-  const auth = getAuth();
-  const provider = new GoogleAuthProvider();
+  // const auth = getAuth();
+  // const provider = new GoogleAuthProvider();
 
   const resetAuthForm = useCallback(() => {
     if (inputMail) {
@@ -63,27 +57,27 @@ const Authentication: FC<AuthorizationPageProps> = ({ register, login, forgotPas
     if (localStorage.getItem("user")) navigate("/");
   }, []);
 
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        if (user.uid && user.email && user.emailVerified) {
-          const { uid, email, emailVerified } = user;
-          const userToSave = { uid, email, emailVerified };
-          localStorage.setItem("user", JSON.stringify(userToSave));
-          dispatch(createUser(userToSave));
-        }
-      } else {
-        localStorage.clear();
-      }
-    });
+  // useEffect(() => {
+  //   const unsubscribe = auth.onAuthStateChanged((user) => {
+  //     if (user) {
+  //       if (user.uid && user.email && user.emailVerified) {
+  //         const { uid, email, emailVerified } = user;
+  //         const userToSave = { uid, email, emailVerified };
+  //         localStorage.setItem("user", JSON.stringify(userToSave));
+  //         dispatch(createUser(userToSave));
+  //       }
+  //     } else {
+  //       localStorage.clear();
+  //     }
+  //   });
 
-    return () => {
-      unsubscribe(); // Remove listener for state change
-    };
-  }, []);
+  //   return () => {
+  //     unsubscribe(); // Remove listener for state change
+  //   };
+  // }, []);
 
   useEffect(() => {
-    if (textActions.text && isStateTextActionChange && pathname !== "/auth-response") {
+    if (textActions.text && isStateTextActionChange && pathname !== PAGE_ROUTES.AUTH_RESPONSE) {
       setTextActions({
         text: [""],
         status: "",
@@ -95,88 +89,108 @@ const Authentication: FC<AuthorizationPageProps> = ({ register, login, forgotPas
 
   const handleCreateUser = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsLoading(true);
-    createUserWithEmailAndPassword(auth, inputMail, inputPass)
-      .then(({ user }) => {
-        sendEmailVerification(user).then(() => {
-          setTextActions({
-            text: ["На вашу пошту", <b key={nextId("bold")}>{user.email}</b>, "був відправлений лист для верифікації"],
-            status: "SUCCESS",
-          });
-          signOut(auth);
-          resetAuthForm();
-        });
-      })
-      .catch((error) => {
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        if (errorCode === "auth/email-already-in-use") {
-          setTextActions({
-            text: [`Даний емейл вже зареєстрований на сайті`],
-            status: "WARNING",
-          });
-        }
-        if (errorCode === "auth/invalid-email") {
-          setTextActions({
-            text: ["Введіть коректний емейл для реєстрації, наприклад:", <b key={nextId("bold")}>email@example.com</b>],
-            status: "WARNING",
-          });
-        }
-        if (errorCode === "auth/weak-password") {
-          setTextActions({
-            text: [`Пароль закороткий, введіть мінімум 6 символів`],
-            status: "WARNING",
-          });
-        }
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
+    signUp({
+      email: inputMail,
+      password: inputPass,
+    }).then(({ user, accessToken }) => {
+      resetAuthForm();
+      Cookies.set("accessToken", accessToken);
+      dispatch(setUser(user));
+      navigate("/");
+    });
+
+    // setIsLoading(true);
+    // createUserWithEmailAndPassword(auth, inputMail, inputPass)
+    //   .then(({ user }) => {
+    //     sendEmailVerification(user).then(() => {
+    //       setTextActions({
+    //         text: ["На вашу пошту", <b key={nextId("bold")}>{user.email}</b>, "був відправлений лист для верифікації"],
+    //         status: "SUCCESS",
+    //       });
+    //       signOut(auth);
+    //       resetAuthForm();
+    //     });
+    //   })
+    //   .catch((error) => {
+    //     const errorCode = error.code;
+    //     const errorMessage = error.message;
+    //     if (errorCode === "auth/email-already-in-use") {
+    //       setTextActions({
+    //         text: [`Даний емейл вже зареєстрований на сайті`],
+    //         status: "WARNING",
+    //       });
+    //     }
+    //     if (errorCode === "auth/invalid-email") {
+    //       setTextActions({
+    //         text: ["Введіть коректний емейл для реєстрації, наприклад:", <b key={nextId("bold")}>email@example.com</b>],
+    //         status: "WARNING",
+    //       });
+    //     }
+    //     if (errorCode === "auth/weak-password") {
+    //       setTextActions({
+    //         text: [`Пароль закороткий, введіть мінімум 6 символів`],
+    //         status: "WARNING",
+    //       });
+    //     }
+    //   })
+    //   .finally(() => {
+    //     setIsLoading(false);
+    //   });
   };
 
   const handleLogin = useCallback(
     (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
-      setIsLoading(true);
-      signInWithEmailAndPassword(auth, inputMail, inputPass)
-        .then(({ user }) => {
-          if (!user.emailVerified) {
-            signOut(auth);
-            throw new Error("unverified-user");
-          }
-          resetAuthForm();
-          dispatch(resetFavoriteRecipes());
-          navigate("/");
-        })
-        .catch((error) => {
-          const errorCode = error.code;
-          const errorMessage = error.message;
-          if (errorCode === "auth/invalid-login-credentials") {
-            setTextActions({
-              text: [`Невірно введені логін або пароль`],
-              status: "WARNING",
-            });
-          }
-          if (errorCode === "auth/too-many-requests") {
-            setTextActions({
-              text: [`Ви здійснили багато запитів на авторизацію, почекайте декілька хвилин`],
-              status: "WARNING",
-            });
-          }
-          if (errorMessage === "unverified-user") {
-            setTextActions({
-              text: [
-                "Для входу - верифікуйте свій емейл:",
-                <b key={nextId("bold")}>{auth.currentUser?.email}</b>,
-                "за посиланням на пошті",
-              ],
-              status: "WARNING",
-            });
-          }
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
+      signIn({
+        email: inputMail,
+        password: inputPass,
+      }).then(({ user, accessToken }) => {
+        resetAuthForm();
+        Cookies.set("accessToken", accessToken);
+        dispatch(setUser(user));
+        navigate("/");
+      });
+
+      // setIsLoading(true);
+      // signInWithEmailAndPassword(auth, inputMail, inputPass)
+      //   .then(({ user }) => {
+      //     if (!user.emailVerified) {
+      //       signOut(auth);
+      //       throw new Error("unverified-user");
+      //     }
+      //     resetAuthForm();
+      //     dispatch(resetFavoriteRecipes());
+      //     navigate("/");
+      //   })
+      //   .catch((error) => {
+      //     const errorCode = error.code;
+      //     const errorMessage = error.message;
+      //     if (errorCode === "auth/invalid-login-credentials") {
+      //       setTextActions({
+      //         text: [`Невірно введені логін або пароль`],
+      //         status: "WARNING",
+      //       });
+      //     }
+      //     if (errorCode === "auth/too-many-requests") {
+      //       setTextActions({
+      //         text: [`Ви здійснили багато запитів на авторизацію, почекайте декілька хвилин`],
+      //         status: "WARNING",
+      //       });
+      //     }
+      //     if (errorMessage === "unverified-user") {
+      //       setTextActions({
+      //         text: [
+      //           "Для входу - верифікуйте свій емейл:",
+      //           <b key={nextId("bold")}>{auth.currentUser?.email}</b>,
+      //           "за посиланням на пошті",
+      //         ],
+      //         status: "WARNING",
+      //       });
+      //     }
+      //   })
+      //   .finally(() => {
+      //     setIsLoading(false);
+      //   });
     },
     [inputMail, inputPass],
   );
@@ -184,50 +198,50 @@ const Authentication: FC<AuthorizationPageProps> = ({ register, login, forgotPas
   const handleResetPassword = useCallback(
     (e: React.MouseEvent<HTMLFormElement>) => {
       e.preventDefault();
-      setIsLoading(true);
-      sendPasswordResetEmail(auth, inputMail)
-        .then((res) => {
-          setTextActions({
-            text: [
-              "Лист з посиланням на відновлення паролю успішно надісланий на електронну пошту:",
-              <b key={nextId("bold")}>{inputMail}</b>,
-            ],
-            status: "SUCCESS",
-          });
-          resetAuthForm();
-        })
-        .catch((error) => {
-          const errorCode = error.code;
-          const errorMessage = error.message;
-          if (errorCode === "auth/invalid-email") {
-            setTextActions({
-              text: [`Користувач з такою поштою не зареєстрований`],
-              status: "WARNING",
-            });
-          }
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
+      // setIsLoading(true);
+      // sendPasswordResetEmail(auth, inputMail)
+      //   .then((res) => {
+      //     setTextActions({
+      //       text: [
+      //         "Лист з посиланням на відновлення паролю успішно надісланий на електронну пошту:",
+      //         <b key={nextId("bold")}>{inputMail}</b>,
+      //       ],
+      //       status: "SUCCESS",
+      //     });
+      //     resetAuthForm();
+      //   })
+      //   .catch((error) => {
+      //     const errorCode = error.code;
+      //     const errorMessage = error.message;
+      //     if (errorCode === "auth/invalid-email") {
+      //       setTextActions({
+      //         text: [`Користувач з такою поштою не зареєстрований`],
+      //         status: "WARNING",
+      //       });
+      //     }
+      //   })
+      //   .finally(() => {
+      //     setIsLoading(false);
+      //   });
     },
     [inputMail],
   );
 
   const authWithGoogle = useCallback(() => {
-    signInWithPopup(auth, provider)
-      .then((result) => {
-        const credential = GoogleAuthProvider.credentialFromResult(result);
-        const token = credential?.accessToken;
-        const { user } = result;
-        dispatch(resetFavoriteRecipes());
-        navigate("/");
-      })
-      .catch((error) => {
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        const { email } = error.customData;
-        const credential = GoogleAuthProvider.credentialFromError(error);
-      });
+    // signInWithPopup(auth, provider)
+    //   .then((result) => {
+    //     const credential = GoogleAuthProvider.credentialFromResult(result);
+    //     const token = credential?.accessToken;
+    //     const { user } = result;
+    //     dispatch(resetFavoriteRecipes());
+    //     navigate("/");
+    //   })
+    //   .catch((error) => {
+    //     const errorCode = error.code;
+    //     const errorMessage = error.message;
+    //     const { email } = error.customData;
+    //     const credential = GoogleAuthProvider.credentialFromError(error);
+    //   });
   }, []);
 
   const handleMailChange = useCallback(
@@ -287,7 +301,7 @@ const Authentication: FC<AuthorizationPageProps> = ({ register, login, forgotPas
         loginByEmailPassInput={loginByEmailPassInput}
         authWithGoogle={authWithGoogle}
         textActions={textActions}
-        isLoading={isLoading}
+        isLoading={signInPending}
       />
       <AuthRegister
         isOpen={register || false}
@@ -300,7 +314,7 @@ const Authentication: FC<AuthorizationPageProps> = ({ register, login, forgotPas
         signUpByEmailPassInput={signUpByEmailPassInput}
         authWithGoogle={authWithGoogle}
         textActions={textActions}
-        isLoading={isLoading}
+        isLoading={signUpPending}
       />
       <ForgotPassword
         isOpen={forgotPassword || false}
@@ -308,7 +322,7 @@ const Authentication: FC<AuthorizationPageProps> = ({ register, login, forgotPas
         handleMailChange={handleMailChange}
         inputMail={inputMail}
         textActions={textActions}
-        isLoading={isLoading}
+        isLoading={false}
       />
       {authResponse && (
         <AuthResponse setTextActions={setTextActions} setIsStateTextActionChange={setIsStateTextActionChange} />

@@ -1,8 +1,6 @@
 import { LazyMotion, AnimatePresence, domAnimation } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { fetchRecipe, setFavoriteRecipes } from "../../store/reducers/RecipesListSlice";
-import { manageFavoritesRecipes, fetchFavoritesRecipes } from "../../store/reducers/FavoritesRecipesSlice";
 import PopUp from "../../shared-components/PopUp/PopUp";
 import { useAppDispatch, useAppSelector } from "../../hooks/hooks";
 import EditRecipeForm from "./components/EditRecipeForm/EditRecipeForm";
@@ -11,53 +9,23 @@ import RecentlyViewed from "./components/RecentlyViewed/RecentlyViewed";
 import RecipeContent from "./components/RecipeContent/RecipeContent";
 import "./AboutRecipePage.scss";
 import Loader from "../../shared-components/Loader/Loader";
+import { useGetRecipeById } from "../../queries/get-recipe-by-id/get-recipe-by-id.query";
+import { useGetRecentlyViewedRecipes } from "../../queries/get-recently-viewed-recipes/get-recently-viewed-recipes.query";
 
 const AboutRecipePage = () => {
   const recipeId = useParams();
-  const { recipe, loadingRecipe, error } = useAppSelector((state) => state.recipes);
-  const loadingRecipesToFirebase = useAppSelector((state) => state.favoriteRecipes.loadingRecipeIdToFirebase);
-  const { uid } = useAppSelector((state) => state.authentication.user);
+  const { id: uid } = useAppSelector((state) => state.authentication.user) || {};
   const dispatch = useAppDispatch();
   const [isEditActive, setIsEditActive] = useState<boolean>(false);
   const [currentRecipeToEdit, setCurrentRecipeToEdit] = useState<Recipe | null>(null);
   const [attentionWindowOpen, setAttentionWindowOpen] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (loadingRecipe === "succeeded") {
-      window.scrollTo({ top: 0 });
-    }
-  }, [loadingRecipe]);
-
-  useEffect(() => {
-    if (!recipeId.id) return;
-    dispatch(fetchRecipe(recipeId.id));
-    if (!uid) return;
-    dispatch(fetchFavoritesRecipes(uid));
-  }, [uid, recipeId]);
-
-  useEffect(() => {
-    if (loadingRecipesToFirebase !== "succeeded") return;
-    dispatch(fetchFavoritesRecipes(uid));
-  }, [loadingRecipesToFirebase]);
+  const { data: recipe, isSuccess, isPending, error } = useGetRecipeById({ id: recipeId.id });
+  const { data: recentlyRecipes } = useGetRecentlyViewedRecipes({});
 
   const handleEditRecipe = useCallback(
     (fetchedRecepieInfo: Recipe) => {
       setIsEditActive(true);
       setCurrentRecipeToEdit(fetchedRecepieInfo);
-    },
-    [recipe?.id],
-  );
-
-  const handleAddFavorite = useCallback(
-    (recipeId: string | number | null, item: Recipe, isFavorite: boolean) => {
-      dispatch(manageFavoritesRecipes({ item, uid })).then(() => {
-        dispatch(
-          setFavoriteRecipes({
-            recipeId,
-            isFavorite: !isFavorite,
-          }),
-        );
-      });
     },
     [recipe?.id],
   );
@@ -91,19 +59,14 @@ const AboutRecipePage = () => {
               />
             )}
             <AnimatePresence>
-              {recipe && loadingRecipe === "succeeded" && !isEditActive && (
-                <RecipeContent
-                  key={`content-${recipe.id}`}
-                  recipe={recipe}
-                  handleEditRecipe={handleEditRecipe}
-                  handleAddFavorite={handleAddFavorite}
-                />
+              {recipe && isSuccess && !isEditActive && (
+                <RecipeContent key={`content-${recipe.id}`} recipe={recipe} handleEditRecipe={handleEditRecipe} />
               )}
             </AnimatePresence>
-            {loadingRecipe === "pending" && <Loader />}
+            {isPending && <Loader />}
             {error ? "щось пішло не так(" : ""}
           </main>
-          {recipe?.id && <RecentlyViewed key={`recently-viewed-bblock-${recipe.id}`} currentId={recipe.id} />}
+          {recentlyRecipes && recentlyRecipes.length > 0 && <RecentlyViewed recentlyRecipes={recentlyRecipes} />}
         </div>
       </section>
     </LazyMotion>

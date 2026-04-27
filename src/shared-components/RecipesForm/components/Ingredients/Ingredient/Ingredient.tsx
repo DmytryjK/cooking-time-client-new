@@ -15,10 +15,10 @@ const Ingredient = ({
   setIsIngredientDragEnd?: Dispatch<SetStateAction<{ isDragEnd: boolean; id: string | number }>>;
   isIngredientDragEnd?: { isDragEnd: boolean; id: string | number };
 }) => {
-  const { id, tagText, tagUnit, tagQuantityWithUnit } = ingredient;
-  const [inputTagText, setInputTagText] = useState(tagText);
-  const [tagQuantity, setTagQuantity] = useState<string>(tagQuantityWithUnit);
-  const [tagUnitLocal, setTagUnitLocal] = useState<string>(tagUnit);
+  const { id, name, unit, amount } = ingredient;
+  const [inputTagText, setInputTagText] = useState(name);
+  const [tagQuantity, setTagQuantity] = useState<string>(amount ? String(amount) : "");
+  const [tagUnitLocal, setTagUnitLocal] = useState<string>(unit);
   const dispatch = useAppDispatch();
   const controls = useDragControls();
 
@@ -38,9 +38,9 @@ const Ingredient = ({
     dispatch(
       updateIngredientInfoById({
         id,
-        tagText,
-        tagUnit: tagUnitLocal,
-        tagQuantityWithUnit: tagQuantity,
+        name,
+        unit: tagUnitLocal,
+        amount: Number(tagQuantity) || 0,
       }),
     );
   }, [tagQuantity, tagUnitLocal]);
@@ -85,9 +85,9 @@ const Ingredient = ({
               dispatch(
                 updateIngredientInfoById({
                   id,
-                  tagText: inputTagText,
-                  tagUnit: tagUnitLocal,
-                  tagQuantityWithUnit: tagQuantity,
+                  name: inputTagText,
+                  unit: tagUnitLocal,
+                  amount: Number(tagQuantity) || 0,
                 }),
               );
             }}

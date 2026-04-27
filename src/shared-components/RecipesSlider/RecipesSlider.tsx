@@ -2,12 +2,11 @@ import { FC, memo } from "react";
 import { EmblaOptionsType } from "embla-carousel";
 import useEmblaCarousel from "embla-carousel-react";
 import { PrevButton, NextButton, usePrevNextButtons } from "./components/SliderArrowBtns";
-import { manageFavoritesRecipes } from "../../store/reducers/FavoritesRecipesSlice";
-import { setFavoriteRecipes } from "../../store/reducers/RecipesListSlice";
 import { useAppDispatch, useAppSelector } from "../../hooks/hooks";
 import RecipeListItem from "../RecipeListItem/RecipeListItem";
 import type { Recipe } from "../../types/type";
-import { toggleFavoriteRecentlyRecipe } from "../../store/reducers/RecenltyViewedSlice";
+// import { toggleFavoriteRecentlyRecipe } from "../../store/reducers/RecenltyViewedSlice";
+import { useToggleFavorite } from "../../queries/post-toggle-favorite/post-toggle-favorite.mutation";
 import "./RecipesSlider.scss";
 
 type PropType = {
@@ -19,20 +18,12 @@ const RecipesSlider: FC<PropType> = (props) => {
   const { slides, options } = props;
   const [emblaRef, emblaApi] = useEmblaCarousel(options);
   const dispatch = useAppDispatch();
-  const { uid } = useAppSelector((state) => state.authentication.user);
+  const { id: uid } = useAppSelector((state) => state.authentication.user) || {};
   const { prevBtnDisabled, nextBtnDisabled, onPrevButtonClick, onNextButtonClick } = usePrevNextButtons(emblaApi);
+  const { mutateAsync: toggleFavorite } = useToggleFavorite();
 
-  const handleAddFavorite = (recepieId: string | number | null, item: Recipe) => {
-    dispatch(manageFavoritesRecipes({ item, uid }));
-    dispatch(
-      setFavoriteRecipes({
-        recipeId: recepieId,
-        isFavorite: !item.favorites,
-      }),
-    );
-    if (recepieId) {
-      dispatch(toggleFavoriteRecentlyRecipe(recepieId.toString()));
-    }
+  const handleAddFavorite = (recipeId: string, isFavorite: boolean) => {
+    toggleFavorite({ recipeId, isFavorite: !isFavorite });
   };
 
   return (

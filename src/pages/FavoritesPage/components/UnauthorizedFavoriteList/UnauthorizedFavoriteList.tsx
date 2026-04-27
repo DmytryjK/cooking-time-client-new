@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import { PAGE_ROUTES } from "../../../../config/page-routes";
 import { LazyMotion, m, domAnimation } from "framer-motion";
 import "./UnauthorizedFavoriteList.scss";
 
@@ -25,11 +26,11 @@ const UnauthorizedFavoriteList = () => {
           Щоб мати змогу додати рецепти в обрані або переглянути свій список обраних
         </p>
         <div className="favorite-unauthorized__link-wrapper">
-          <NavLink className="favorite-unauthorized__link" to="/auth-register">
+          <NavLink className="favorite-unauthorized__link" to={PAGE_ROUTES.REGISTER}>
             Зареєструйтесь
           </NavLink>
           <span className="favorite-unauthorized__divider-link">або</span>
-          <NavLink className="favorite-unauthorized__link" to="/auth-login">
+          <NavLink className="favorite-unauthorized__link" to={PAGE_ROUTES.LOGIN}>
             Увійдіть
           </NavLink>
         </div>

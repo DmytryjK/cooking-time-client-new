@@ -1,4 +1,5 @@
 import { useEffect, useState, Dispatch, SetStateAction } from "react";
+import { PAGE_ROUTES } from "../../../../../../config/page-routes";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { getAuth, applyActionCode } from "firebase/auth";
 import type { Auth } from "firebase/auth";
@@ -37,7 +38,7 @@ const EmailVerification = ({
             text: [`Увійдіть, використовуючи актуальні дані`],
             status: "SUCCESS",
           });
-          navigate("/auth-login");
+          navigate(PAGE_ROUTES.LOGIN);
         }, 1500);
       })
       .catch((error) => {

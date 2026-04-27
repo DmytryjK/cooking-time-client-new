@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import { PAGE_ROUTES } from "../../../../../config/page-routes";
 import { useRef } from "react";
 import ActionsMessage from "../../ActionsMessage/ActionsMessage";
 import type { TextActions } from "../Authentication";
@@ -105,7 +106,7 @@ const AuthRegister = (props: Props) => {
       </div>
       <div className="authentication__change-form">
         <span>Маєте аккаунт?</span>
-        <NavLink className="authentication__change-form_link" to="/auth-login">
+        <NavLink className="authentication__change-form_link" to={PAGE_ROUTES.LOGIN}>
           Увійти
         </NavLink>
       </div>

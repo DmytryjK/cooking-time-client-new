@@ -6,17 +6,17 @@ import { useAppSelector } from "../../hooks/hooks";
 import "./AddRecipePage.scss";
 
 const AddRecipePage = () => {
-  const { loadingForm } = useAppSelector((state) => state.recipes);
+  // const { loadingForm } = useAppSelector((state) => state.recipes);
   const isMessageClosed = sessionStorage.getItem("isMessageClosed") === "true";
-  const { uid } = useAppSelector((state) => state.authentication.user);
+  const { id: uid } = useAppSelector((state) => state.authentication.user) || {};
   const [isUnauthorizedAttention, setIsUnauthorizedAttention] = useState(!uid && !isMessageClosed);
   const [isSuccessPopUpShow, setIsSuccessPopUpShow] = useState(false);
 
-  useEffect(() => {
-    if (loadingForm === "succeeded") {
-      setIsSuccessPopUpShow(true);
-    }
-  }, [loadingForm]);
+  // useEffect(() => {
+  //   if (loadingForm === "succeeded") {
+  //     setIsSuccessPopUpShow(true);
+  //   }
+  // }, [loadingForm]);
 
   useEffect(() => {
     if (!uid && !isMessageClosed) {
@@ -91,7 +91,12 @@ const AddRecipePage = () => {
                 </m.div>
               )}
             </AnimatePresence>
-            <RecipesForm id="" method="POST" />
+            <RecipesForm
+              method="POST"
+              onSuccess={() => {
+                setIsSuccessPopUpShow(true);
+              }}
+            />
           </div>
         </m.section>
       </LazyMotion>

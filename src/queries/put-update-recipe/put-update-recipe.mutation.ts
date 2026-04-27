@@ -1,0 +1,19 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { putUpdateRecipe } from "../../api/put-update-recipe/put-update-recipe";
+import { PutUpdateRecipeReq } from "../../api/put-update-recipe/put-update-recipe.type";
+import { Recipe } from "../../types/type";
+
+export const useUpdateRecipe = ({ onSuccess }: { onSuccess?: () => void }) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: Recipe["id"]; body: PutUpdateRecipeReq }) => putUpdateRecipe(id, body),
+    onSuccess: (recipe) => {
+      queryClient.invalidateQueries({ queryKey: ["get-recipes"] });
+      queryClient.invalidateQueries({ queryKey: [`get-recipe-${recipe.id}`] });
+      onSuccess?.();
+    },
+    onError: (error) => {
+      alert(`some error ${error.message}`);
+    },
+  });
+};

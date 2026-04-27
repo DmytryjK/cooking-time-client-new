@@ -1,34 +1,32 @@
-import { useEffect } from "react";
 import RecipeList from "./RecipeList/RecipeLIst";
-import { useAppDispatch, useAppSelector } from "../../hooks/hooks";
-import { fetchRecipes } from "../../store/reducers/RecipesListSlice";
-import { fetchFavoritesRecipes } from "../../store/reducers/FavoritesRecipesSlice";
+import { useAppSelector } from "../../hooks/hooks";
 import Filters from "../../shared-components/Filters/Filters";
+import { useGetRecipes } from "../../queries/get-recipes/get-recipes.query";
+import Loader from "../../shared-components/Loader/Loader";
 import "./MainPage.scss";
 
 const MainPage = () => {
-  const dispatch = useAppDispatch();
-  const localUser = localStorage.getItem("user");
-  const localUserParsedId = localUser && JSON.parse(localUser).uid;
-  const recipes = useAppSelector((state) => state.recipes.recipes);
-  const loadingRecipes = useAppSelector((state) => state.recipes.loadingRecipes);
-  const loadingFavorites = useAppSelector((state) => state.favoriteRecipes.loadingRecipesById);
-  const uid = useAppSelector((state) => state.authentication.user.uid);
+  const searchValue = useAppSelector((state) => state.filters.searchInput);
+  const tags = useAppSelector((state) => state.filters.searchTags);
+  const searchCategories = useAppSelector((state) => state.filters.searchCategories);
 
-  useEffect(() => {
-    if (recipes.length === 0 && loadingRecipes === "idle") {
-      dispatch(fetchRecipes(localUserParsedId));
-      if (loadingFavorites !== "succeeded") {
-        dispatch(fetchFavoritesRecipes(uid));
-      }
-    }
-  }, [loadingRecipes]);
+  const {
+    data: recipes,
+    isLoading,
+    isError,
+    error,
+    isSuccess,
+  } = useGetRecipes({
+    search: searchValue,
+    ingredients: tags.map((tag) => tag.tagText),
+    categories: searchCategories,
+  });
 
   return (
     <section className="main">
       <div className="container">
-        <Filters title="Всі рецепти" currentPage="MAIN" />
-        <RecipeList />
+        <Filters title="Всі рецепти" currentPage="MAIN" isEmpty={isSuccess && recipes.length === 0} />
+        {isLoading ? <Loader /> : <RecipeList recipes={recipes} />}
       </div>
     </section>
   );

@@ -12,7 +12,7 @@ const EditRecipeForm: FC<{
   setIsAttentionOpen: React.Dispatch<SetStateAction<boolean>>;
   setIsEditActive: React.Dispatch<SetStateAction<boolean>>;
 }> = ({ recipe, setIsAttentionOpen, setIsEditActive }) => {
-  const { title, ingredients, imgDto, description, category, time, id, favorites } = recipe;
+  const { title, ingredients, images, description, category, cookingTimeInMinutes, id, isFavorite } = recipe;
   const { loadingForm } = useAppSelector((state) => state.recipes);
   const [isSuccessPopUpShow, setIsSuccessPopUpShow] = useState(false);
 
@@ -22,11 +22,10 @@ const EditRecipeForm: FC<{
     }
   }, [loadingForm]);
 
-  const loadedPhotos = imgDto.map((img) => {
+  const loadedPhotos = images?.map((img) => {
     return {
       id: img.id,
-      loadedSrc: img.src,
-      localSrc: img.src,
+      src: img.imageUrl,
     };
   });
 
@@ -67,14 +66,15 @@ const EditRecipeForm: FC<{
           <h1 className="edit-recipe__title">Редагувати рецепт</h1>
           <p className="edit-recipe__descr">Відредагуйте потрібні поля нижче та збережіть дані</p>
           <RecipesForm
-            id={id}
-            title={title}
-            categoryName={category}
-            timer={time}
-            descr={description}
-            loadedPhotos={loadedPhotos}
-            ingredients={ingredients}
-            isFavorite={favorites}
+            // id={id}
+            // title={title}
+            // category={category}
+            // cookingTimeInMinutes={cookingTimeInMinutes}
+            // descr={description}
+            // loadedPhotos={loadedPhotos}
+            // ingredients={ingredients}
+            // isFavorite={isFavorite}
+            recipe={recipe}
             method="UPDATE"
           />
         </m.div>

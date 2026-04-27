@@ -1,25 +1,24 @@
 import { useState, useEffect, useContext } from "react";
 import { UploadFileType } from "../../../../../types/type";
 import { LoadedPhotoContext } from "../../../RecipesForm";
+import { PhotoFieldType } from "../UploadPhotos";
 import "./PhotoField.scss";
 
-const PhotoField = ({ id, name, maxSize }: { id: string; name: string; maxSize?: string }) => {
+const PhotoField = ({ id, name, maxSize }: PhotoFieldType) => {
   const { loadedPhotosInfo, setLoadedPhotosInfo } = useContext(LoadedPhotoContext);
   const [loadedPhotoSrc, setLocalPhotoSrc] = useState<string>("");
   const [uploadInputValue, setUploadInputValue] = useState<string>("");
 
   useEffect(() => {
-    if (loadedPhotosInfo.length === 0) {
+    if (!loadedPhotosInfo) {
       setUploadInputValue("");
       setLocalPhotoSrc("");
     }
   }, [loadedPhotosInfo]);
 
   useEffect(() => {
-    if (!loadedPhotosInfo || loadedPhotosInfo.length === 0) return;
-    const foundIndexOfPhoto = loadedPhotosInfo.findIndex((photo) => photo.id === id);
-    if (foundIndexOfPhoto === -1) return;
-    setLocalPhotoSrc(loadedPhotosInfo[foundIndexOfPhoto].localSrc);
+    if (!loadedPhotosInfo?.[id]?.src) return;
+    setLocalPhotoSrc(loadedPhotosInfo[id]!.src);
   }, [loadedPhotosInfo]);
 
   const readFile = (file: UploadFileType) => {
@@ -27,16 +26,15 @@ const PhotoField = ({ id, name, maxSize }: { id: string; name: string; maxSize?:
       const fr = new FileReader();
       fr.onload = () => {
         setLoadedPhotosInfo((prev) => {
-          return [
-            ...prev.filter((prevItem) => prevItem.id !== id),
-            {
+          return {
+            ...(prev ?? {}),
+            [id]: {
               id,
-              localSrc: fr.result?.toString() || "",
-              loadedSrc: "",
+              src: fr.result?.toString() || "",
               uploadFile: file,
-              srcForRemove: prev.find((item) => item.id === id)?.srcForRemove || "",
+              srcForRemove: prev?.[id]?.srcForRemove || "",
             },
-          ];
+          };
         });
         resolve("");
       };
@@ -64,18 +62,8 @@ const PhotoField = ({ id, name, maxSize }: { id: string; name: string; maxSize?:
 
   const handleRemovePhoto = () => {
     setLoadedPhotosInfo((prev) => {
-      return [
-        ...prev.map((item) => {
-          if (item.id === id) {
-            return {
-              ...item,
-              localSrc: "",
-              srcForRemove: item.loadedSrc,
-            };
-          }
-          return item;
-        }),
-      ];
+      delete prev?.[id];
+      return prev;
     });
     setLocalPhotoSrc("");
   };

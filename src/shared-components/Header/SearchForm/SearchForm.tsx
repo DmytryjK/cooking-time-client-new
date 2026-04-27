@@ -7,14 +7,13 @@ import {
   searchInputValue,
   deleteAllTags,
   setResetFiltersByName,
+  activeCategories,
 } from "../../../store/reducers/FiltersSlice";
 import loader from "../../../assets/icons/loader/loader.svg";
-import { filterRecipes } from "../../../store/reducers/RecipesListSlice";
-import { filterFavoriteRecipes } from "../../../store/reducers/FavoritesRecipesSlice";
 import CustomSelect from "../../CustomSelect/CustomSelect";
 import debounce from "../../../helpers/debounce";
-import "./SearchForm.scss";
 import { Loading } from "../../../types/type";
+import "./SearchForm.scss";
 
 const SearchForm = () => {
   const dispatch = useAppDispatch();
@@ -22,7 +21,7 @@ const SearchForm = () => {
   const [inputValue, setInputValue] = useState<string>("");
   const [isSearchLoading, setIsSearchLoading] = useState<Loading>("idle");
   const { searchInput, searchTags, searchCategories, isResetSearchFileters } = useAppSelector((state) => state.filters);
-  const [selectedOption, setSelectedOption] = useState("");
+  const [selectedOption, setSelectedOption] = useState<string | undefined>();
   const [isSelectOpen, setIsSelectOpen] = useState<boolean>(false);
   const searchRef = useRef<HTMLInputElement>(null);
   const searchTypes = [
@@ -39,15 +38,20 @@ const SearchForm = () => {
 
   const debounceSearch = useCallback(
     debounce((searchInput, searchTags, searchCategories) => {
-      dispatch(filterRecipes({ searchInput, searchTags, searchCategories }));
-      dispatch(
-        filterFavoriteRecipes({
-          searchInput,
-          searchTags,
-          searchCategories,
-        }),
-      );
-    }, 400),
+      // dispatch(filterRecipes({ searchInput, searchTags, searchCategories }));
+      //       searchInputValue
+      // addSearchTag
+      // dispatch(searchInputValue(searchInput));
+      // dispatch(addSearchTag(searchTags));
+      // dispatch(activeCategories(searchCategories));
+      // dispatch(
+      //   filterFavoriteRecipes({
+      //     searchInput,
+      //     searchTags,
+      //     searchCategories,
+      //   }),
+      // );
+    }, 300),
     [],
   );
 
@@ -55,7 +59,7 @@ const SearchForm = () => {
     debounce((inputValue) => {
       dispatch(searchInputValue(inputValue));
       setIsSearchLoading("succeeded");
-    }, 400),
+    }, 300),
     [],
   );
 
@@ -151,7 +155,7 @@ const SearchForm = () => {
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           onClick={() => setIsSelectOpen(!isSelectOpen)}
-          placeholder={`Пошук ${selectedOption.toLowerCase()}`}
+          placeholder={`Пошук ${selectedOption?.toLowerCase()}`}
         />
         {inputValue && (
           <button

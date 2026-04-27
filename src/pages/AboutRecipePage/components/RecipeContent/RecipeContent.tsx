@@ -4,25 +4,28 @@ import parse from "html-react-parser";
 import LazyLoad from "react-lazy-load";
 import { useNavigate } from "react-router-dom";
 import { useAppSelector } from "../../../../hooks/hooks";
-import { Recipe } from "../../../../types/type";
+import { ImageType, Recipe } from "../../../../types/type";
 import iconsSprite from "../../../../assets/icons/about-recipe/sprite.svg";
 import timerIcon from "../../../../assets/icons/timer-line2.svg";
+import { useToggleFavorite } from "../../../../queries/post-toggle-favorite/post-toggle-favorite.mutation";
 
 type Props = {
   recipe: Recipe;
   handleEditRecipe: (recipe: Recipe) => void;
-  handleAddFavorite: (id: string | number | null, recipe: Recipe, isFavorite: boolean) => void;
 };
 
 const RecipeContent = (props: Props) => {
-  const { recipe, handleEditRecipe, handleAddFavorite } = props;
-  const { title, ingredients, imgDto, description, category, id, time, authorId } = recipe;
-  const favoriteRecipe = useAppSelector((state) => state.favoriteRecipes.favoriteRecipes);
-  const { uid, isAdmin } = useAppSelector((state) => state.authentication.user);
-  const isFavorite = favoriteRecipe.some((recipe) => recipe.id === id);
-  const mainImg = imgDto.find((img) => img.id === "main");
+  const { recipe, handleEditRecipe } = props;
+  const { title, ingredients, images, description, category, id, cookingTimeInMinutes, userId, isFavorite } = recipe;
+  const { mutateAsync: toggleFavorites } = useToggleFavorite();
+  const { id: uid, role } = useAppSelector((state) => state.authentication.user) || {};
+  const mainImg = images?.find((img) => img.type === ImageType.main);
   const parsedDescr = parse(description || "");
   const navigate = useNavigate();
+  const hours = Math.floor(cookingTimeInMinutes / 60);
+  const minutes = cookingTimeInMinutes % 60;
+  const isAdmin = role === "admin";
+  console.log(isFavorite, "isFavorite");
   return (
     <m.div
       key={`recipe-page-content-${id}`}
@@ -37,7 +40,7 @@ const RecipeContent = (props: Props) => {
     >
       <div className="recipe-page__top">
         <div className="recipe-page__top-btns">
-          {!authorId || uid === authorId || isAdmin ? (
+          {!userId || uid === userId || isAdmin ? (
             <button
               className="recipe-page__edit-btn"
               title="редагувати"
@@ -57,7 +60,10 @@ const RecipeContent = (props: Props) => {
             type="button"
             onClick={() => {
               if (uid) {
-                handleAddFavorite(id, recipe, isFavorite);
+                toggleFavorites({
+                  recipeId: id,
+                  isFavorite: !isFavorite,
+                });
               } else {
                 navigate("/favorites");
               }
@@ -70,11 +76,11 @@ const RecipeContent = (props: Props) => {
         </div>
         <div className="recipe-page__top-wrapper">
           <h2 className="recipe-page__title">{title}</h2>
-          <span className="recipe-page__categories">{category}</span>
+          <span className="recipe-page__categories">{category.name}</span>
         </div>
         <div className="recipe-page__photo-wrapper">
           <LazyLoad>
-            <img className="recipe-page__photo" src={mainImg?.src || ""} alt="фото" />
+            <img className="recipe-page__photo" src={mainImg?.imageUrl || ""} alt="фото" />
           </LazyLoad>
         </div>
       </div>
@@ -86,7 +92,7 @@ const RecipeContent = (props: Props) => {
               <div className="recipe-page__time-inner">
                 <img className="recipe-page__time-icon" src={timerIcon} alt="час" />
                 <span className="recipe-page__time-text">
-                  {time.hours ? `${time.hours} год` : ""} {time.minutes ? `${time.minutes} хв` : ""}
+                  {hours > 0 && `${hours} год`} {minutes > 0 && `${minutes} хв`}
                 </span>
               </div>
             </div>
@@ -94,13 +100,13 @@ const RecipeContent = (props: Props) => {
               <h3 className="recipe-page__ingredients-title recipe-titles">Інгредієнти</h3>
               <ul className="recipe-page__ingredients-list">
                 {ingredients?.map((ingredient) => {
-                  const { tagText, tagQuantityWithUnit, tagUnit } = ingredient;
+                  const { name, amount, unit } = ingredient;
                   return (
                     <li key={nextId("ingredient-")} className="recipe-page__ingredients-item">
-                      <span className="ingredients-item__character">{tagText}</span>
-                      {tagQuantityWithUnit && (
+                      <span className="ingredients-item__character">{name}</span>
+                      {amount && (
                         <span className="ingredients-item__quantity">
-                          {tagQuantityWithUnit} {tagUnit}
+                          {amount} {unit}
                         </span>
                       )}
                     </li>

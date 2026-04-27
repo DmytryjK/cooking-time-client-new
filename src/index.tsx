@@ -1,29 +1,19 @@
 import { Provider } from "react-redux";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Layout from "./pages/Layout/Layout";
-import { Page404 } from "./pages";
+import { RouterProvider } from "react-router-dom";
 import { store } from "./store/store";
-import { router, routerNoLoyout } from "./router";
+import { router } from "./router";
 import "./styles/index.scss";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import Loader from "./shared-components/Loader/Loader";
+
+const queryClient = new QueryClient();
 
 const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
 root.render(
-  <Provider store={store}>
-    <BrowserRouter future={{v7_startTransition: true,v7_relativeSplatPath: true}}>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          {router.map((link) => {
-            return <Route key={link.path} path={link.path} element={link.element} />;
-          })}
-        </Route>
-        {routerNoLoyout.map((link) => {
-          return <Route key={link.path} path={link.path} element={link.element} />;
-        })}
-        <Route path="*" element={<Layout />}>
-          <Route path="*" element={<Page404 />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
-  </Provider>,
+  <QueryClientProvider client={queryClient}>
+    <Provider store={store}>
+      <RouterProvider router={router} fallbackElement={<Loader />} />
+    </Provider>
+  </QueryClientProvider>,
 );

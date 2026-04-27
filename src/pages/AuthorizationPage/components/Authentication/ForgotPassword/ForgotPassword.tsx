@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { PAGE_ROUTES } from "../../../../../config/page-routes";
 import { NavLink } from "react-router-dom";
 import ActionsMessage from "../../ActionsMessage/ActionsMessage";
 import LoadingDataBtn from "../../../../../shared-components/LoadingDataBtn/LoadingDataBtn";
@@ -49,7 +50,7 @@ const ForgotPassword = (props: Props) => {
         </form>
       </div>
       <div className="authentication__change-form">
-        <NavLink className="authentication__change-form_link" to="/auth-login">
+        <NavLink className="authentication__change-form_link" to={PAGE_ROUTES.LOGIN}>
           Назад
         </NavLink>
       </div>

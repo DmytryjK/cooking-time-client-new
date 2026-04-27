@@ -2,7 +2,7 @@ import { useState, useEffect, ChangeEvent, Dispatch, SetStateAction, RefObject }
 import nextId from "react-id-generator";
 import "./CustomSelect.scss";
 
-const CustomSelect = ({
+const CustomSelect = <T,>({
   value,
   setValue,
   fieldValues,
@@ -13,20 +13,22 @@ const CustomSelect = ({
   setIsOpen,
   searchRef,
   isButtonVisible,
+  getLabel = (item: T) => String(item),
 }: {
-  value?: string;
-  setValue: Dispatch<SetStateAction<string>>;
-  fieldValues: string[];
+  value?: T;
+  setValue: Dispatch<SetStateAction<T | undefined>>;
+  fieldValues: T[];
   selectTitle: string;
   isShowCurrentOption?: boolean;
-  initialCheckedValue?: string;
+  initialCheckedValue?: T;
   isOpen?: boolean;
   setIsOpen?: Dispatch<SetStateAction<boolean>>;
   searchRef?: RefObject<HTMLInputElement>;
   isButtonVisible?: boolean;
+  getLabel?: (item: T) => string;
 }) => {
   const [isCategoryActive, setIsCategoryActive] = useState<boolean>(false);
-  const [selectedValue, setSelectedValue] = useState<string>(initialCheckedValue || "");
+  const [selectedValue, setSelectedValue] = useState<T | undefined>(() => initialCheckedValue);
 
   useEffect(() => {
     setIsCategoryActive(isOpen);
@@ -34,8 +36,8 @@ const CustomSelect = ({
 
   useEffect(() => {
     if (value === undefined) return;
-    if (value === "") {
-      setSelectedValue(value);
+    if (value === ("" as T)) {
+      setSelectedValue(undefined);
     }
   }, [value]);
 
@@ -65,13 +67,14 @@ const CustomSelect = ({
     return () => document.removeEventListener("click", closeSelect);
   }, [isCategoryActive]);
 
-  const toggleCategories = (e: ChangeEvent<HTMLInputElement>) => {
-    const { target } = e;
-    setSelectedValue(target.value);
+  const handleChange = (item: T) => {
+    setSelectedValue(item);
     setIsCategoryActive(false);
     if (setIsOpen) setIsOpen(false);
     searchRef?.current?.focus();
   };
+
+  const selectedLabel = selectedValue ? getLabel(selectedValue) : undefined;
 
   return (
     <div className={`custom-select ${isCategoryActive ? "active" : ""}`}>
@@ -86,24 +89,25 @@ const CustomSelect = ({
             }
           }}
         >
-          <span className="btn__text">{isShowCurrentOption ? selectedValue || selectTitle : selectTitle}</span>{" "}
+          <span className="btn__text">{isShowCurrentOption ? selectedLabel || selectTitle : selectTitle}</span>{" "}
         </button>
       )}
       <fieldset className="custom-select__fields">
-        {fieldValues.map((category) => {
-          const id = nextId(`${category}`);
+        {fieldValues.map((item) => {
+          const label = getLabel(item);
+          const id = nextId(`${label}`);
           return (
             <div className="custom-select__field" key={id}>
               <input
                 className="custom-select__input"
                 id={id}
                 type="checkbox"
-                value={category}
-                onChange={toggleCategories}
-                checked={category === selectedValue}
+                value={label}
+                onChange={() => handleChange(item)}
+                checked={label === selectedLabel}
               />
               <label className="custom-select__label" htmlFor={id}>
-                {category}
+                {label}
               </label>
               <span className="custom-select__input-custom" />
             </div>
@@ -116,7 +120,6 @@ const CustomSelect = ({
 
 CustomSelect.defaultProps = {
   isShowCurrentOption: true,
-  initialCheckedValue: "",
 };
 
 export default CustomSelect;

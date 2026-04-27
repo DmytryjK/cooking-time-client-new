@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import { PAGE_ROUTES } from "../../../../../config/page-routes";
 import { useRef } from "react";
 import ActionsMessage from "../../ActionsMessage/ActionsMessage";
 import type { TextActions } from "../Authentication";
@@ -93,7 +94,7 @@ const AuthLogin = (props: Props) => {
                         </label>
                     </div> */}
           {textActions.text[0] && <ActionsMessage textActions={textActions} />}
-          <NavLink className="form-email__forgot-password" to="/auth-forgot-pass">
+          <NavLink className="form-email__forgot-password" to={PAGE_ROUTES.FORGOT_PASSWORD}>
             Забули пароль?
           </NavLink>
           <LoadingDataBtn
@@ -106,7 +107,7 @@ const AuthLogin = (props: Props) => {
       </div>
       <div className="authentication__change-form">
         <span>Не маєте аккаунта?</span>
-        <NavLink className="authentication__change-form_link" to="/auth-register">
+        <NavLink className="authentication__change-form_link" to={PAGE_ROUTES.REGISTER}>
           Зареєструйтесь
         </NavLink>
       </div>

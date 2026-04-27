@@ -1,73 +1,84 @@
 export type IngredientsType = {
-    id: string | number;
-    tagText: string;
-    tagQuantityWithUnit: string;
-    tagUnit: string;
+  id: string | number;
+  amount: number;
+  name: string;
+  unit: string;
+  matched?: boolean;
 };
 
-type ImgDto = {
-    id: string;
-    src: string;
+export interface Category {
+  id: string;
+  name: string;
+}
+
+export enum ImageType {
+  preview = "PREVIEW",
+  main = "MAIN",
+}
+
+export type ImageDto = {
+  id: string;
+  createdAt: string;
+  imageUrl: string;
+  publicId: string;
+  type: ImageType;
 };
 export interface Recipe {
-    id: string | number | null;
-    authorId: string;
-    title: string;
-    time: { hours: string; minutes: string };
-    ingredients?: IngredientsType[];
-    imgDto: ImgDto[];
-    description?: string;
-    favorites: boolean;
-    category: string;
+  id: string;
+  images: ImageDto[];
+  userId: string | null;
+  title: string;
+  cookingTimeInMinutes: number;
+  ingredients: IngredientsType[];
+  isFavorite: boolean;
+  description?: string;
+  category: Category;
 }
 
 export interface RecipesFromServer {
-    [key: string]: Recipe;
+  [key: string]: Recipe;
 }
 
 export interface Recipes {
-    recipes: Recipe[];
-    fetchedRecepieInfo?: Recipe | null;
+  recipes: Recipe[];
+  fetchedRecepieInfo?: Recipe | null;
 }
 
 export interface PostState {
-    loading: 'idle' | 'pending' | 'succeeded' | 'failed';
-    loadingForm?: 'idle' | 'pending' | 'succeeded' | 'failed';
-    error: null | unknown;
+  loading: "idle" | "pending" | "succeeded" | "failed";
+  loadingForm?: "idle" | "pending" | "succeeded" | "failed";
+  error: null | unknown;
 }
 
 export interface TagsType {
-    id: number | string;
-    tagText: string;
+  id: number | string;
+  tagText: string;
 }
 
 export interface ObjectForFiltered {
-    recipes: Recipe[];
-    tags: string[];
+  recipes: Recipe[];
+  tags: string[];
 }
 
 export interface UploadFileType {
-    lastModified?: number;
-    lastModifiedDate?: Date;
-    name?: string;
-    size?: number;
-    type?: string;
-    webkitRelativePath?: string;
+  lastModified?: number;
+  lastModifiedDate?: Date;
+  name?: string;
+  size?: number;
+  type?: string;
+  webkitRelativePath?: string;
 }
 
-export interface UserType {
-    user: {
-        uid: string;
-        email: string;
-        emailVerified: null | boolean;
-        isAdmin: boolean;
-    };
+export interface AuthStore {
+  user: User | null;
+  accessToken: string | null;
 }
 
 export interface User {
-    uid: string;
-    email: string;
-    emailVerified: null | boolean;
+  id: string;
+  email: string;
+  isEmailVerified: null | boolean;
+  role: "user" | "admin";
 }
 
-export type Loading = 'idle' | 'pending' | 'succeeded' | 'failed';
+export type Loading = "idle" | "pending" | "succeeded" | "failed";
