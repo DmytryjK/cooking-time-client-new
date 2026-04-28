@@ -40,7 +40,7 @@ const Ingredient = ({
         id,
         name,
         unit: tagUnitLocal,
-        amount: Number(tagQuantity) || 0,
+        amount: tagQuantity,
       }),
     );
   }, [tagQuantity, tagUnitLocal]);
@@ -87,7 +87,7 @@ const Ingredient = ({
                   id,
                   name: inputTagText,
                   unit: tagUnitLocal,
-                  amount: Number(tagQuantity) || 0,
+                  amount: tagQuantity,
                 }),
               );
             }}

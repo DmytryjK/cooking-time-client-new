@@ -97,7 +97,7 @@ const Ingredients = ({ localingredients }: { localingredients: IngredientsType[]
       addIngredientTags({
         id: nextId(`ingredient-${tagName}`),
         name: tagName,
-        amount: 0,
+        amount: "",
         unit: "",
       }),
     );

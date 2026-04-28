@@ -9,6 +9,7 @@ import { setTokens, setUser } from "../../store/reducers/AuthenticationSlice";
 import Cookies from "js-cookie";
 import type { layoutLoader } from "../../router";
 import type { User } from "../../types/type";
+import { Toaster } from "react-hot-toast";
 
 const Layout = () => {
   const dispatch = useAppDispatch();
@@ -36,6 +37,7 @@ const Layout = () => {
         <Outlet />
       </Suspense>
       <Footer />
+      <Toaster position="top-right" />
     </div>
   );
 };

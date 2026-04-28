@@ -1,6 +1,6 @@
 export type IngredientsType = {
   id: string | number;
-  amount: number;
+  amount: string;
   name: string;
   unit: string;
   matched?: boolean;
