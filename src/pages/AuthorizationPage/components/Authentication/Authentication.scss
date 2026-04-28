@@ -37,7 +37,11 @@
     }
     &-btn {
       margin-top: 25px;
-      display: block;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-decoration: none;
+      color: $text-color;
       font-weight: 500;
       font-size: 16px;
       line-height: 22px;

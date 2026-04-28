@@ -1,26 +1,23 @@
 import { LazyMotion, AnimatePresence, domAnimation } from "framer-motion";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useParams } from "react-router-dom";
 import PopUp from "../../shared-components/PopUp/PopUp";
-import { useAppDispatch, useAppSelector } from "../../hooks/hooks";
 import EditRecipeForm from "./components/EditRecipeForm/EditRecipeForm";
 import { Recipe } from "../../types/type";
 import RecentlyViewed from "./components/RecentlyViewed/RecentlyViewed";
 import RecipeContent from "./components/RecipeContent/RecipeContent";
-import "./AboutRecipePage.scss";
 import Loader from "../../shared-components/Loader/Loader";
 import { useGetRecipeById } from "../../queries/get-recipe-by-id/get-recipe-by-id.query";
 import { useGetRecentlyViewedRecipes } from "../../queries/get-recently-viewed-recipes/get-recently-viewed-recipes.query";
+import "./AboutRecipePage.scss";
 
 const AboutRecipePage = () => {
   const recipeId = useParams();
-  const { id: uid } = useAppSelector((state) => state.authentication.user) || {};
-  const dispatch = useAppDispatch();
   const [isEditActive, setIsEditActive] = useState<boolean>(false);
   const [currentRecipeToEdit, setCurrentRecipeToEdit] = useState<Recipe | null>(null);
   const [attentionWindowOpen, setAttentionWindowOpen] = useState<boolean>(false);
   const { data: recipe, isSuccess, isPending, error } = useGetRecipeById({ id: recipeId.id });
-  const { data: recentlyRecipes } = useGetRecentlyViewedRecipes({});
+  const { data: recentlyRecipes, isSuccess: recentlyLoaded } = useGetRecentlyViewedRecipes({});
 
   const handleEditRecipe = useCallback(
     (fetchedRecepieInfo: Recipe) => {
@@ -66,7 +63,7 @@ const AboutRecipePage = () => {
             {isPending && <Loader />}
             {error ? "щось пішло не так(" : ""}
           </main>
-          {recentlyRecipes && recentlyRecipes.length > 0 && <RecentlyViewed recentlyRecipes={recentlyRecipes} />}
+          {recentlyLoaded && <RecentlyViewed recentlyRecipes={recentlyRecipes} />}
         </div>
       </section>
     </LazyMotion>

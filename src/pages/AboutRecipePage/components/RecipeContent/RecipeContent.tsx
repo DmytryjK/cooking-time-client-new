@@ -25,7 +25,7 @@ const RecipeContent = (props: Props) => {
   const hours = Math.floor(cookingTimeInMinutes / 60);
   const minutes = cookingTimeInMinutes % 60;
   const isAdmin = role === "admin";
-  console.log(isFavorite, "isFavorite");
+
   return (
     <m.div
       key={`recipe-page-content-${id}`}

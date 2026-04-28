@@ -10,6 +10,7 @@ export const useGetRecentlyViewedRecipes = ({ onSuccess, onError }: GetRecentlyV
     queryKey: ["get-recently-viewed-recipes"],
     onSuccess,
     onError,
+    gcTime: 0,
     enabled: !!user,
   });
 };

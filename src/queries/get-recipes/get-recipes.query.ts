@@ -2,6 +2,7 @@ import { buildQuery } from "../../helpers/buildQuery";
 import { getRecipes } from "../../api/get-recipes/get-recipes";
 import { useCustomQuery } from "../../services/tanstack-queries/use-custom-query";
 import { GetRecipesProps } from "./get-recipes.type";
+import { keepPreviousData } from "@tanstack/react-query";
 
 export const useGetRecipes = ({ onSuccess, onError, ...params }: GetRecipesProps) =>
   useCustomQuery({
@@ -10,4 +11,5 @@ export const useGetRecipes = ({ onSuccess, onError, ...params }: GetRecipesProps
     staleTime: 10 * 60 * 1000,
     onSuccess,
     onError,
+    placeholderData: keepPreviousData,
   });

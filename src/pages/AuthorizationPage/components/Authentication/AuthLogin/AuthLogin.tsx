@@ -4,6 +4,7 @@ import { useRef } from "react";
 import ActionsMessage from "../../ActionsMessage/ActionsMessage";
 import type { TextActions } from "../Authentication";
 import LoadingDataBtn from "../../../../../shared-components/LoadingDataBtn/LoadingDataBtn";
+import GoogleAuthLink from "../GoogleAuthLink/GoogleAuthLink";
 
 type Props = {
   isOpen?: boolean;
@@ -114,12 +115,7 @@ const AuthLogin = (props: Props) => {
       <div className="authentication__decorative-block">
         <span className="text">або</span>
       </div>
-      <button className="authentication__block-btn" type="button" onClick={authWithGoogle}>
-        <span className="authentication__block-text">
-          Продовжити через Google
-          <span className="authentication__block-decorative block-google" />
-        </span>
-      </button>
+      <GoogleAuthLink />
     </div>
   );
 };

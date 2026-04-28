@@ -1,5 +1,12 @@
 import { createBrowserRouter, redirect } from "react-router-dom";
-import { MainPage, AddRecipePage, AboutRecipePage, FavoritesPage, AuthorizationPage } from "./pages";
+import {
+  MainPage,
+  AddRecipePage,
+  AboutRecipePage,
+  FavoritesPage,
+  AuthorizationPage,
+  GoogleAuthSuccessPage,
+} from "./pages";
 import Layout from "./pages/Layout/Layout";
 import { Page404 } from "./pages";
 import Cookies from "js-cookie";
@@ -74,6 +81,10 @@ export const router = createBrowserRouter([
       {
         path: "response",
         element: <AuthorizationPage authResponse />,
+      },
+      {
+        path: "google-success",
+        element: <GoogleAuthSuccessPage />,
       },
       {
         path: "*",

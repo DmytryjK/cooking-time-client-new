@@ -1,9 +1,9 @@
 import { EmblaOptionsType } from "embla-carousel";
 import RecipesSlider from "../../../../shared-components/RecipesSlider/RecipesSlider";
-import "./RecentlyViewed.scss";
 import { Recipe } from "../../../../types/type";
+import "./RecentlyViewed.scss";
 
-const RecentlyViewed = ({ recentlyRecipes }: { recentlyRecipes: Recipe[] }) => {
+const RecentlyViewed = ({ recentlyRecipes }: { recentlyRecipes?: Recipe[] }) => {
   const OPTIONS: EmblaOptionsType = {
     align: "start",
     duration: 20,
@@ -13,7 +13,7 @@ const RecentlyViewed = ({ recentlyRecipes }: { recentlyRecipes: Recipe[] }) => {
   return (
     <section className="recently-views">
       <h2 className="recently-views__title">Нещодавно переглянуті</h2>
-      <RecipesSlider slides={recentlyRecipes} options={OPTIONS} />
+      {recentlyRecipes && recentlyRecipes.length > 0 && <RecipesSlider slides={recentlyRecipes} options={OPTIONS} />}
     </section>
   );
 };

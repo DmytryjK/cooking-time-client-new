@@ -2,10 +2,8 @@ import { FC, memo } from "react";
 import { EmblaOptionsType } from "embla-carousel";
 import useEmblaCarousel from "embla-carousel-react";
 import { PrevButton, NextButton, usePrevNextButtons } from "./components/SliderArrowBtns";
-import { useAppDispatch, useAppSelector } from "../../hooks/hooks";
 import RecipeListItem from "../RecipeListItem/RecipeListItem";
 import type { Recipe } from "../../types/type";
-// import { toggleFavoriteRecentlyRecipe } from "../../store/reducers/RecenltyViewedSlice";
 import { useToggleFavorite } from "../../queries/post-toggle-favorite/post-toggle-favorite.mutation";
 import "./RecipesSlider.scss";
 
@@ -17,8 +15,6 @@ type PropType = {
 const RecipesSlider: FC<PropType> = (props) => {
   const { slides, options } = props;
   const [emblaRef, emblaApi] = useEmblaCarousel(options);
-  const dispatch = useAppDispatch();
-  const { id: uid } = useAppSelector((state) => state.authentication.user) || {};
   const { prevBtnDisabled, nextBtnDisabled, onPrevButtonClick, onNextButtonClick } = usePrevNextButtons(emblaApi);
   const { mutateAsync: toggleFavorite } = useToggleFavorite();
 
