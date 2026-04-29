@@ -94,11 +94,7 @@ const RecipeContent = (props: Props) => {
             <span className="recipe-page__categories">{category.name}</span>
           </div>
 
-          {uid && (
-            <>
-              <RecipeRating recipeId={id} ratingsCount={ratingsCount} avgRating={avgRating} userRating={userRating} />
-            </>
-          )}
+          <RecipeRating recipeId={id} ratingsCount={ratingsCount} avgRating={avgRating} userRating={userRating} />
         </div>
         <div className="recipe-page__photo-wrapper">
           <LazyLoad>
