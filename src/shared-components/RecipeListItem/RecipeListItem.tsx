@@ -7,6 +7,7 @@ import RemoveRecipeByAdmin from "./RemoveRecipeByAdmin/RemoveRecipeByAdmin";
 import { ImageType, Recipe } from "../../types/type";
 import { useAppSelector } from "../../hooks/hooks";
 import "./RecipeListItem.scss";
+import { Star } from "../Star/Star";
 
 type HandleAddToFavorite = (recipeId: string, isFavorite: boolean) => void;
 
@@ -86,9 +87,16 @@ const RecipeListItem = ({
               <NavLink to={`/about-recipe/${id}`}>{title.length > 42 ? `${title.substring(0, 42)}...` : title}</NavLink>
             </h2>
             <div className="recipe-card__inner-wrapper">
-              <span className={timerClass}>
-                {hours > 0 && `${hours} год`} {minutes > 0 && `${minutes} хв`}
-              </span>
+              <div className="flex items-end justify-between gap-2">
+                <span className={timerClass}>
+                  {hours > 0 && `${hours} год`} {minutes > 0 && `${minutes} хв`}
+                </span>
+                <span className="flex items-start gap-1">
+                  {recipe.avgRating}
+                  <Star fill={recipe.avgRating / 5} />
+                </span>
+              </div>
+
               <div className="recipe-card__product-tags-slider embla" ref={emblaRef}>
                 <ul className="recipe-card__product-tags product-tags embla__container">
                   {ingredients?.map((item) => (

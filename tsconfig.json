@@ -16,5 +16,5 @@
     "noEmit": true,
     "jsx": "react-jsx"
   },
-  "include": [".eslintrc.cjs", ".prettierrc.cjs", "src"]
+  "include": [".eslintrc.cjs", ".prettierrc.cjs", "src", "tailwind.config.js", "postcss.config.js"]
 }

@@ -14,8 +14,9 @@ export const API_ROUTES = {
   GET_RECIPE_BY_ID: (id: string) => `/recipes/${id}`,
   CREATE_RECIPE: "/recipes/new",
   UPDATE_RECIPE: (id: string) => `/recipes/update/${id}`,
-  DELETE_RECIPE: (id: string) => `/recipes/${id}`,
   GET_RECENTLYT_VIEWED_RECIPES: "/recipes/recently-viewed-recipes",
+  SET_RECIPE_RATING: (id: string) => `/recipes/${id}/rating`,
+  DELETE_RECIPE: (id: string) => `/recipes/${id}`,
 
   TOGGLE_FAVORITE: "/users/favorites",
 

@@ -8,6 +8,7 @@ import { ImageType, Recipe } from "../../../../types/type";
 import iconsSprite from "../../../../assets/icons/about-recipe/sprite.svg";
 import timerIcon from "../../../../assets/icons/timer-line2.svg";
 import { useToggleFavorite } from "../../../../queries/post-toggle-favorite/post-toggle-favorite.mutation";
+import { RecipeRating } from "./RecipeRating/RecipeRating";
 
 type Props = {
   recipe: Recipe;
@@ -16,7 +17,20 @@ type Props = {
 
 const RecipeContent = (props: Props) => {
   const { recipe, handleEditRecipe } = props;
-  const { title, ingredients, images, description, category, id, cookingTimeInMinutes, userId, isFavorite } = recipe;
+  const {
+    title,
+    ingredients,
+    images,
+    description,
+    category,
+    id,
+    cookingTimeInMinutes,
+    userId,
+    isFavorite,
+    ratingsCount,
+    avgRating,
+    userRating,
+  } = recipe;
   const { mutateAsync: toggleFavorites } = useToggleFavorite();
   const { id: uid, role } = useAppSelector((state) => state.authentication.user) || {};
   const mainImg = images?.find((img) => img.type === ImageType.main);
@@ -75,8 +89,16 @@ const RecipeContent = (props: Props) => {
           </button>
         </div>
         <div className="recipe-page__top-wrapper">
-          <h2 className="recipe-page__title">{title}</h2>
-          <span className="recipe-page__categories">{category.name}</span>
+          <div className="flex flex-col justify-end items-center">
+            <h2 className="recipe-page__title">{title}</h2>
+            <span className="recipe-page__categories">{category.name}</span>
+          </div>
+
+          {uid && (
+            <>
+              <RecipeRating recipeId={id} ratingsCount={ratingsCount} avgRating={avgRating} userRating={userRating} />
+            </>
+          )}
         </div>
         <div className="recipe-page__photo-wrapper">
           <LazyLoad>
@@ -84,6 +106,17 @@ const RecipeContent = (props: Props) => {
           </LazyLoad>
         </div>
       </div>
+      {uid && (
+        <>
+          <RecipeRating
+            recipeId={id}
+            ratingsCount={ratingsCount}
+            avgRating={avgRating}
+            userRating={userRating}
+            interactive
+          />
+        </>
+      )}
       <div className="recipe-page__content">
         <div className="recipe-page__left-col">
           <div className="recipe-page__left-fixed">

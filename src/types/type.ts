@@ -33,6 +33,9 @@ export interface Recipe {
   isFavorite: boolean;
   description?: string;
   category: Category;
+  avgRating: number;
+  ratingsCount: number;
+  userRating?: number;
 }
 
 export interface RecipesFromServer {
