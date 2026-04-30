@@ -62,6 +62,7 @@ const EditRecipeForm: FC<{
             method="UPDATE"
             onSuccess={() => {
               setIsEditActive(false);
+              window.scrollTo({ top: 0, behavior: "smooth" });
             }}
           />
         </m.div>
