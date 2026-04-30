@@ -6,8 +6,8 @@ import { easeOut, LazyMotion, m, domMax } from "framer-motion";
 import RemoveRecipeByAdmin from "./RemoveRecipeByAdmin/RemoveRecipeByAdmin";
 import { ImageType, Recipe } from "../../types/type";
 import { useAppSelector } from "../../hooks/hooks";
-import "./RecipeListItem.scss";
 import { Star } from "../Star/Star";
+import "./RecipeListItem.scss";
 
 type HandleAddToFavorite = (recipeId: string, isFavorite: boolean) => void;
 
@@ -91,8 +91,8 @@ const RecipeListItem = ({
                 <span className={timerClass}>
                   {hours > 0 && `${hours} год`} {minutes > 0 && `${minutes} хв`}
                 </span>
-                <span className="flex items-start gap-1">
-                  {recipe.avgRating}
+                <span className="flex items-end gap-0.5">
+                  <span className="font-medium text-md leading-none">{recipe.avgRating}</span>
                   <Star fill={recipe.avgRating / 5} />
                 </span>
               </div>
