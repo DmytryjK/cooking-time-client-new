@@ -12,7 +12,6 @@ const EditRecipeForm: FC<{
   setIsAttentionOpen: React.Dispatch<SetStateAction<boolean>>;
   setIsEditActive: React.Dispatch<SetStateAction<boolean>>;
 }> = ({ recipe, setIsAttentionOpen, setIsEditActive }) => {
-  const { title, ingredients, images, description, category, cookingTimeInMinutes, id, isFavorite } = recipe;
   const { loadingForm } = useAppSelector((state) => state.recipes);
   const [isSuccessPopUpShow, setIsSuccessPopUpShow] = useState(false);
 
@@ -21,13 +20,6 @@ const EditRecipeForm: FC<{
       setIsSuccessPopUpShow(true);
     }
   }, [loadingForm]);
-
-  const loadedPhotos = images?.map((img) => {
-    return {
-      id: img.id,
-      src: img.imageUrl,
-    };
-  });
 
   return (
     <div className="edit-recipe">
@@ -66,16 +58,11 @@ const EditRecipeForm: FC<{
           <h1 className="edit-recipe__title">Редагувати рецепт</h1>
           <p className="edit-recipe__descr">Відредагуйте потрібні поля нижче та збережіть дані</p>
           <RecipesForm
-            // id={id}
-            // title={title}
-            // category={category}
-            // cookingTimeInMinutes={cookingTimeInMinutes}
-            // descr={description}
-            // loadedPhotos={loadedPhotos}
-            // ingredients={ingredients}
-            // isFavorite={isFavorite}
             recipe={recipe}
             method="UPDATE"
+            onSuccess={() => {
+              setIsEditActive(false);
+            }}
           />
         </m.div>
       </LazyMotion>

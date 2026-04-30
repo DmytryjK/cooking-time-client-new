@@ -79,9 +79,7 @@ export const RecipeRating = ({
       ) : (
         <div className="flex gap-2 justify-center">
           <div className="flex">
-            {getMappedRating(avgRating).map((rt, index) => (
-              <Star key={index} fill={rt.fill} />
-            ))}
+            <Star fill={avgRating / 5} />
           </div>
           {avgRating} ({ratingsCount} {getRatingsLabel(ratingsCount)})
         </div>

@@ -8,6 +8,7 @@ import { ImageType, Recipe } from "../../types/type";
 import { useAppSelector } from "../../hooks/hooks";
 import { Star } from "../Star/Star";
 import "./RecipeListItem.scss";
+import { PAGE_ROUTES } from "../../config/page-routes";
 
 type HandleAddToFavorite = (recipeId: string, isFavorite: boolean) => void;
 
@@ -71,7 +72,7 @@ const RecipeListItem = ({
       >
         <RemoveRecipeByAdmin id={id} />
         <div className="recipe-card__wrapper">
-          <NavLink className="recipe-card__img-wrapper" to={`/about-recipe/${id}`}>
+          <NavLink className="recipe-card__img-wrapper" to={`${PAGE_ROUTES.RECIPE}/${id}`}>
             <LazyLoad width={290} height={290}>
               <img
                 className="recipe-card__image"
@@ -84,7 +85,9 @@ const RecipeListItem = ({
           </NavLink>
           <div className="recipe-card__content-text">
             <h2 className="recipe-card__title" title={title}>
-              <NavLink to={`/about-recipe/${id}`}>{title.length > 42 ? `${title.substring(0, 42)}...` : title}</NavLink>
+              <NavLink to={`${PAGE_ROUTES}/${id}`}>
+                {title.length > 42 ? `${title.substring(0, 42)}...` : title}
+              </NavLink>
             </h2>
             <div className="recipe-card__inner-wrapper">
               <div className="flex items-end justify-between gap-2">

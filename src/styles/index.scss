@@ -2,6 +2,17 @@
 @import "../fonts/fonst.scss";
 
 @tailwind base;
+
+@layer base {
+  ul {
+    list-style: disc;
+  }
+
+  ol {
+    list-style: decimal;
+  }
+}
+
 @tailwind components;
 @tailwind utilities;
 

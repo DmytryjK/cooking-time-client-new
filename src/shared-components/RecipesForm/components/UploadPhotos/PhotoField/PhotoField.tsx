@@ -83,9 +83,10 @@ const PhotoField = ({ id, name, maxSize }: PhotoFieldType) => {
           {loadedPhotoSrc ? <img className="upload-photo__preview" src={loadedPhotoSrc} alt="" /> : "Завантажити фото"}
         </div>
         <button
-          className={`upload-photo__reset-photo ${loadedPhotoSrc ? "active" : ""} `}
+          className={`upload-photo__reset-photo flex justify-center items-center ${loadedPhotoSrc ? "active" : ""} `}
           type="button"
           aria-label="видалити фото"
+          title="видалити фото"
           onClick={handleRemovePhoto}
         >
           <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">

@@ -1,5 +1,5 @@
 import { useEffect, useState, Suspense } from "react";
-import { useLocation, Outlet, useLoaderData } from "react-router-dom";
+import { useLocation, Outlet, useLoaderData, ScrollRestoration } from "react-router-dom";
 import Header from "../../shared-components/Header/Header";
 import Footer from "../../shared-components/Footer/Footer";
 import LazyLoaderPage from "../../shared-components/Loader/LazyLoaderPage/LazyLoaderPage";
@@ -38,6 +38,7 @@ const Layout = () => {
       </Suspense>
       <Footer />
       <Toaster position="top-right" />
+      <ScrollRestoration />
     </div>
   );
 };

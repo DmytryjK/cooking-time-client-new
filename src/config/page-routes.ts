@@ -13,4 +13,5 @@ export const PAGE_ROUTES = {
   ROOT: "/",
   FAVORITES: "/favorites",
   ADD_RECIPE: "/add-recipe",
+  RECIPE: "/about-recipe",
 };
