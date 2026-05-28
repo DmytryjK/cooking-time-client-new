@@ -1,0 +1,10 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+      args:
+        REACT_APP_API_URL: ${REACT_APP_API_URL:?REACT_APP_API_URL is not set in .env}
+    ports:
+      - "3000:80"

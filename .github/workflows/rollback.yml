@@ -1,0 +1,66 @@
+# Rollback: Actions → Rollback → Run workflow
+
+name: Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment
+        type: choice
+        options: [production, dev]
+        required: true
+      image_tag:
+        description: Image tag in GHCR (abc1234, dev-abc1234, latest, dev-latest)
+        required: true
+        type: string
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set rollback target
+        id: target
+        run: |
+          REPO_LC=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "image_base=ghcr.io/${REPO_LC}" >> $GITHUB_OUTPUT
+          echo "image_tag=${{ inputs.image_tag }}" >> $GITHUB_OUTPUT
+
+          if [ "${{ inputs.environment }}" = "production" ]; then
+            echo "container=cooking-app" >> $GITHUB_OUTPUT
+            echo "host_port=80" >> $GITHUB_OUTPUT
+          else
+            echo "container=cooking-app-dev" >> $GITHUB_OUTPUT
+            echo "host_port=8080" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Rollback on VPS
+        uses: appleboy/ssh-action@v1.2.2
+        env:
+          IMAGE: ${{ steps.target.outputs.image_base }}:${{ steps.target.outputs.image_tag }}
+          CONTAINER: ${{ steps.target.outputs.container }}
+          HOST_PORT: ${{ steps.target.outputs.host_port }}
+          GHCR_PAT: ${{ secrets.GHCR_PAT }}
+          GHCR_USER: ${{ github.actor }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: IMAGE,CONTAINER,HOST_PORT,GHCR_PAT,GHCR_USER
+          script: |
+            set -e
+            echo "$GHCR_PAT" | sudo docker login ghcr.io -u "$GHCR_USER" --password-stdin
+            sudo docker pull "$IMAGE"
+            sudo docker rm -f "$CONTAINER" || true
+            sudo docker run -d \
+              --name "$CONTAINER" \
+              --restart unless-stopped \
+              -p "${HOST_PORT}:80" \
+              "$IMAGE"
+
+      - name: Rollback summary
+        run: |
+          echo "### Rolled back ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Image: \`${{ steps.target.outputs.image_base }}:${{ steps.target.outputs.image_tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Container: \`${{ steps.target.outputs.container }}\`" >> $GITHUB_STEP_SUMMARY

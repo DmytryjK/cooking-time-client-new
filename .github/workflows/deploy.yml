@@ -1,0 +1,109 @@
+# Deploy: push в master → prod (:80), push в dev → dev (:8080)
+
+name: Build and Deploy
+
+on:
+  push:
+    branches: [master, dev]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Description of the environment
+        type: choice
+        options: [production, dev]
+        default: production
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set deploy target
+        id: target
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            ENV="${{ github.event.inputs.environment }}"
+          elif [ "${{ github.ref_name }}" = "master" ]; then
+            ENV="production"
+          else
+            ENV="dev"
+          fi
+
+          SHORT_SHA="${GITHUB_SHA::7}"
+          REPO_LC=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_BASE="ghcr.io/${REPO_LC}"
+
+          if [ "$ENV" = "production" ]; then
+            echo "container=cooking-app" >> $GITHUB_OUTPUT
+            echo "host_port=80" >> $GITHUB_OUTPUT
+            echo "image_tag=${SHORT_SHA}" >> $GITHUB_OUTPUT
+            echo "image_rolling=latest" >> $GITHUB_OUTPUT
+            echo "environment=production" >> $GITHUB_OUTPUT
+          else
+            echo "container=cooking-app-dev" >> $GITHUB_OUTPUT
+            echo "host_port=8080" >> $GITHUB_OUTPUT
+            echo "image_tag=dev-${SHORT_SHA}" >> $GITHUB_OUTPUT
+            echo "image_rolling=dev-latest" >> $GITHUB_OUTPUT
+            echo "environment=dev" >> $GITHUB_OUTPUT
+          fi
+
+          echo "image_base=${IMAGE_BASE}" >> $GITHUB_OUTPUT
+          echo "short_sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ steps.target.outputs.image_base }}:${{ steps.target.outputs.image_tag }}
+            ${{ steps.target.outputs.image_base }}:${{ steps.target.outputs.image_rolling }}
+          build-args: |
+            REACT_APP_API_URL=${{ steps.target.outputs.environment == 'production' && secrets.REACT_APP_API_URL || secrets.REACT_APP_API_URL_DEV }}
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.2.2
+        env:
+          IMAGE: ${{ steps.target.outputs.image_base }}:${{ steps.target.outputs.image_tag }}
+          CONTAINER: ${{ steps.target.outputs.container }}
+          HOST_PORT: ${{ steps.target.outputs.host_port }}
+          GHCR_PAT: ${{ secrets.GHCR_PAT }}
+          GHCR_USER: ${{ github.actor }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: IMAGE,CONTAINER,HOST_PORT,GHCR_PAT,GHCR_USER
+          script: |
+            set -e
+            echo "$GHCR_PAT" | sudo docker login ghcr.io -u "$GHCR_USER" --password-stdin
+            sudo docker pull "$IMAGE"
+            sudo docker rm -f "$CONTAINER" || true
+            sudo docker run -d \
+              --name "$CONTAINER" \
+              --restart unless-stopped \
+              -p "${HOST_PORT}:80" \
+              "$IMAGE"
+
+      - name: Deployment summary
+        run: |
+          echo "### Deployed ${{ steps.target.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Container: \`${{ steps.target.outputs.container }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Port: \`${{ steps.target.outputs.host_port }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Image tag for rollback: \`${{ steps.target.outputs.image_tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Rollback: Actions → **Rollback** → Run workflow → tag \`${{ steps.target.outputs.image_tag }}\`" >> $GITHUB_STEP_SUMMARY
