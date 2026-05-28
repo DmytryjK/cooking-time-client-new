@@ -1,5 +1,3 @@
-# Rollback: Actions → Rollback → Run workflow
-
 name: Rollback
 
 on:

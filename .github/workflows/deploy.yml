@@ -1,5 +1,3 @@
-# Deploy: push в master → prod (:80), push в dev → dev (:8080)
-
 name: Build and Deploy
 
 on:
@@ -65,15 +63,19 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push
-        uses: docker/build-push-action@v6
+        uses: Wandalen/wretry.action@v3.7.1
         with:
-          context: .
-          push: true
-          tags: |
-            ${{ steps.target.outputs.image_base }}:${{ steps.target.outputs.image_tag }}
-            ${{ steps.target.outputs.image_base }}:${{ steps.target.outputs.image_rolling }}
-          build-args: |
-            REACT_APP_API_URL=${{ steps.target.outputs.environment == 'production' && secrets.REACT_APP_API_URL || secrets.REACT_APP_API_URL_DEV }}
+          attempt_limit: 3
+          attempt_delay: 60000
+          action: docker/build-push-action@v6
+          with: |
+            context: .
+            push: true
+            tags: |
+              ${{ steps.target.outputs.image_base }}:${{ steps.target.outputs.image_tag }}
+              ${{ steps.target.outputs.image_base }}:${{ steps.target.outputs.image_rolling }}
+            build-args: |
+              REACT_APP_API_URL=${{ steps.target.outputs.environment == 'production' && secrets.REACT_APP_API_URL || secrets.REACT_APP_API_URL_DEV }}
 
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v1.2.2
