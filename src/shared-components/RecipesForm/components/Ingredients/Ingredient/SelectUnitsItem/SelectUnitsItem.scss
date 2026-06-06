@@ -70,12 +70,13 @@
     &__open-btn {
       position: relative;
       padding: 10px 14px;
-      min-width: 83px;
+      min-width: 95px;
       text-align: left;
       border-radius: 6px;
       border: 1px solid $border-input;
       background-color: $light-color;
       user-select: none;
+      font-size: 14px;
       cursor: pointer;
       .btn__text {
         font-weight: 500;
@@ -102,10 +103,10 @@
         display: block;
         position: absolute;
         top: 50%;
-        right: -6px;
+        right: -7px;
         transform: translateX(-50%) translateY(-50%) rotate(-180deg);
-        width: 24px;
-        height: 24px;
+        width: 20px;
+        height: 20px;
         background: url("../../../../../../assets/icons/sort/select-arrow.svg") center center/cover no-repeat;
       }
     }

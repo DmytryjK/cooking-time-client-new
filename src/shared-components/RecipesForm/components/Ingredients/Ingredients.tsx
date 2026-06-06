@@ -132,7 +132,6 @@ const Ingredients = ({ localingredients }: { localingredients: IngredientsType[]
       {ingredients.length === 0 ? (
         ""
       ) : (
-        // <ul className="tagsForm__tagList tagsForm__tagList_ingredients">
         <LazyMotion features={domAnimation}>
           <Reorder.Group
             className="tagsForm__tagList tagsForm__tagList_ingredients"
@@ -155,7 +154,6 @@ const Ingredients = ({ localingredients }: { localingredients: IngredientsType[]
             })}
           </Reorder.Group>
         </LazyMotion>
-        // </ul>
       )}
       {duplicatedValues.length > 0 ? (
         <div className="duplicated-block">

@@ -13,7 +13,7 @@ const SelectUnitsItem = ({
   setUnit: Dispatch<SetStateAction<string>>;
   tagUnit: string;
 }) => {
-  const units = ["гр", "кг", "л", "мл.", "шт.", "ч.л.", "ст.л.", "зубч.", "стак."];
+  const units = ["гр", "кг", "л", "мл.", "шт.", "ч.л.", "ст.л.", "зубч.", "стак.", "щіпка", "шматок"];
   const [isUnitsOpen, setIsUnitsOpen] = useState<boolean>(false);
   const [currentUnit, setCurrentUnit] = useState<string>(tagUnit || units[0]);
   const [searchUnitValue, setSearchUnitValue] = useState("");

@@ -38,6 +38,22 @@ export interface Recipe {
   userRating?: number;
 }
 
+export interface GeneratedRecipeByLLM {
+  recipe: {
+    isRecipe: boolean;
+    title: string;
+    description: string;
+    cookingTimeInMinutes: number;
+    ingredients: Pick<IngredientsType, "name" | "amount" | "unit">[];
+    suggestedCategoryName: string;
+    images: ImageDto[];
+  };
+}
+
+export interface GeneratedRecipeByLLMTransformed extends GeneratedRecipeByLLM {
+  ingredients: IngredientsType[];
+}
+
 export interface RecipesFromServer {
   [key: string]: Recipe;
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect, ChangeEvent, Dispatch, SetStateAction, RefObject } from "react";
+import { useState, useEffect, Dispatch, SetStateAction, RefObject } from "react";
 import nextId from "react-id-generator";
 import "./CustomSelect.scss";
 
@@ -9,6 +9,7 @@ const CustomSelect = <T,>({
   selectTitle,
   isShowCurrentOption,
   initialCheckedValue,
+  controlled = false,
   isOpen = false,
   setIsOpen,
   searchRef,
@@ -21,6 +22,7 @@ const CustomSelect = <T,>({
   selectTitle: string;
   isShowCurrentOption?: boolean;
   initialCheckedValue?: T;
+  controlled?: boolean;
   isOpen?: boolean;
   setIsOpen?: Dispatch<SetStateAction<boolean>>;
   searchRef?: RefObject<HTMLInputElement>;
@@ -28,23 +30,18 @@ const CustomSelect = <T,>({
   getLabel?: (item: T) => string;
 }) => {
   const [isCategoryActive, setIsCategoryActive] = useState<boolean>(false);
-  const [selectedValue, setSelectedValue] = useState<T | undefined>(() => initialCheckedValue);
+  const [internalValue, setInternalValue] = useState<T | undefined>(() => initialCheckedValue);
+
+  const selectedValue = controlled ? (value === ("" as T) ? undefined : value) : internalValue;
 
   useEffect(() => {
     setIsCategoryActive(isOpen);
   }, [isOpen]);
 
   useEffect(() => {
-    if (value === undefined) return;
-    if (value === ("" as T)) {
-      setSelectedValue(undefined);
-    }
-  }, [value]);
-
-  useEffect(() => {
-    if (!selectedValue) return;
-    setValue(selectedValue);
-  }, [selectedValue]);
+    if (controlled || initialCheckedValue === undefined) return;
+    setValue(initialCheckedValue);
+  }, []);
 
   const closeSelect = (e: any) => {
     if (
@@ -68,7 +65,10 @@ const CustomSelect = <T,>({
   }, [isCategoryActive]);
 
   const handleChange = (item: T) => {
-    setSelectedValue(item);
+    if (!controlled) {
+      setInternalValue(item);
+    }
+    setValue(item);
     setIsCategoryActive(false);
     if (setIsOpen) setIsOpen(false);
     searchRef?.current?.focus();

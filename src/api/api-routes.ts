@@ -12,6 +12,7 @@ export const API_ROUTES = {
   GET_RECIPES: (query: string) => `/recipes?${query}`,
   GET_FAVORITE_RECIPES: "/recipes/favorites",
   GET_RECIPE_BY_ID: (id: string) => `/recipes/${id}`,
+  POST_GENERATED_RECIPE_BY_URL: "/recipes/generate-recipe-from-video-url",
   CREATE_RECIPE: "/recipes/new",
   UPDATE_RECIPE: (id: string) => `/recipes/update/${id}`,
   GET_RECENTLYT_VIEWED_RECIPES: "/recipes/recently-viewed-recipes",

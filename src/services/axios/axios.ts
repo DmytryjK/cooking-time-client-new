@@ -28,7 +28,8 @@ axiosPrivate.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    if (error.response.status === 401 && !originalRequest._retry) {
+
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
@@ -36,12 +37,15 @@ axiosPrivate.interceptors.response.use(
         const { accessToken } = response.data;
         Cookies.set("accessToken", accessToken);
         axiosPrivate.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return axiosPrivate(originalRequest);
       } catch (refreshError) {
         Cookies.remove("accessToken");
         return Promise.reject(refreshError);
       }
     }
+
+    return Promise.reject(error);
   },
 );
 

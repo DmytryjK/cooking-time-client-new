@@ -6,17 +6,10 @@ import { useAppSelector } from "../../hooks/hooks";
 import "./AddRecipePage.scss";
 
 const AddRecipePage = () => {
-  // const { loadingForm } = useAppSelector((state) => state.recipes);
   const isMessageClosed = sessionStorage.getItem("isMessageClosed") === "true";
   const { id: uid } = useAppSelector((state) => state.authentication.user) || {};
   const [isUnauthorizedAttention, setIsUnauthorizedAttention] = useState(!uid && !isMessageClosed);
   const [isSuccessPopUpShow, setIsSuccessPopUpShow] = useState(false);
-
-  // useEffect(() => {
-  //   if (loadingForm === "succeeded") {
-  //     setIsSuccessPopUpShow(true);
-  //   }
-  // }, [loadingForm]);
 
   useEffect(() => {
     if (!uid && !isMessageClosed) {
