@@ -14,7 +14,6 @@ const MainPage = () => {
     data: recipes,
     isLoading,
     isError,
-    error,
     isSuccess,
   } = useGetRecipes({
     search: searchValue,
@@ -27,6 +26,7 @@ const MainPage = () => {
       <div className="container">
         <Filters title="Всі рецепти" currentPage="MAIN" isEmpty={isSuccess && recipes.length === 0} />
         {isLoading ? <Loader /> : <RecipeList recipes={recipes} />}
+        {isError && <div>Сталась помилка при завантаженні контенту.</div>}
       </div>
     </section>
   );

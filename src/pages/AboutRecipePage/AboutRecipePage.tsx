@@ -1,6 +1,6 @@
 import { LazyMotion, AnimatePresence, domAnimation } from "framer-motion";
 import { useCallback, useState } from "react";
-import { ScrollRestoration, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import PopUp from "../../shared-components/PopUp/PopUp";
 import EditRecipeForm from "./components/EditRecipeForm/EditRecipeForm";
 import { Recipe } from "../../types/type";

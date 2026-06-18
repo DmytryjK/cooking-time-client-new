@@ -13,12 +13,10 @@ const PhotoField = ({ id, name, maxSize }: PhotoFieldType) => {
     if (!loadedPhotosInfo) {
       setUploadInputValue("");
       setLocalPhotoSrc("");
+    } else if (loadedPhotosInfo[id]) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      setLocalPhotoSrc(loadedPhotosInfo[id]!.src);
     }
-  }, [loadedPhotosInfo]);
-
-  useEffect(() => {
-    if (!loadedPhotosInfo?.[id]?.src) return;
-    setLocalPhotoSrc(loadedPhotosInfo[id]!.src);
   }, [loadedPhotosInfo]);
 
   const readFile = (file: UploadFileType) => {

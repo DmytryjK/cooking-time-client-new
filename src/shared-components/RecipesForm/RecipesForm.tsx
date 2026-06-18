@@ -1,284 +1,53 @@
-import { useState, useEffect, createContext, Dispatch, SetStateAction, useMemo } from "react";
-import ReactQuill from "react-quill";
-import ImageCompress from "quill-image-compress";
-import { useAppDispatch, useAppSelector } from "../../hooks/hooks";
+import { createContext } from "react";
+
+import { useAppSelector } from "../../hooks/hooks";
 import Ingredients from "./components/Ingredients/Ingredients";
 import UploadPhotos from "./components/UploadPhotos/UploadPhotos";
 import CustomSelect from "../CustomSelect/CustomSelect";
-import { UploadFileType, Category, Recipe } from "../../types/type";
-import { clearAllTags, setAllIngredients } from "../../store/reducers/CreateRecipeFormSlice";
-
-import { useGetCategories } from "../../queries/get-categories/get-recipes.query";
-import { useCreateRecipe } from "../../queries/post-create-recipe/post-create-recipe.mutation";
+import AutoGenerationRecipe from "./components/AutoGenerationRecipe/AutoGenerationRecipe";
+import CookingTime from "./components/CookingTime/CookingTime";
+import { LoadedPhotoContextType, RecipesFormProps } from "./RecipesForm.type";
+import RecipeDescriptionArea from "./components/RecipeDescriptionArea/RecipeDescriptionArea";
+import { useRecipesForm } from "./RecipesForm.logic";
 import "./RecipesForm.scss";
-import "react-quill/dist/quill.snow.css";
-import { useUpdateRecipe } from "../../queries/put-update-recipe/put-update-recipe.mutation";
-import { PutUpdateRecipeReq } from "../../api/put-update-recipe/put-update-recipe.type";
-import { useGenerateRecipeByUrl } from "../../queries/post-generate-recipe/post-generate-recipe.mutation";
-import nextId from "react-id-generator";
-import { cn } from "../../utils/cn";
-
-type Props = {
-  method: "POST" | "UPDATE";
-  recipe?: Recipe;
-  onSuccess?: () => void;
-};
-
-type LoadedPhotoType = {
-  id: string;
-  src: string;
-  srcForRemove?: string;
-  uploadFile?: UploadFileType | any;
-};
-
-export interface LoadedPhotos {
-  main?: LoadedPhotoType;
-  preview?: LoadedPhotoType;
-}
-
-type LoadedPhotoContextType = {
-  loadedPhotosInfo: LoadedPhotos | undefined;
-  setLoadedPhotosInfo: Dispatch<SetStateAction<LoadedPhotos | undefined>>;
-};
 
 export const LoadedPhotoContext = createContext<LoadedPhotoContextType>({
   loadedPhotosInfo: undefined,
   setLoadedPhotosInfo: () => undefined,
 });
 
-ReactQuill.Quill.register("modules/imageCompress", ImageCompress);
-
-const RecipesForm = ({ recipe, method, onSuccess }: Props) => {
-  const {
-    id,
-    title,
-    category,
-    cookingTimeInMinutes,
-    description: recipeDescription,
-    images,
-    ingredients,
-  } = recipe || {};
-  const mainPhoto = images?.find((img) => img.type === "MAIN")?.imageUrl;
-  const previewPhoto = images?.find((img) => img.type === "PREVIEW")?.imageUrl;
-  const initialPhotosState = {
-    ...(mainPhoto ? { main: { id: "main", src: mainPhoto } } : {}),
-    ...(previewPhoto ? { preview: { id: "preview", src: previewPhoto } } : {}),
-  };
-  const { mutateAsync: createRecipe, isPending: isCreating } = useCreateRecipe({ onSuccess });
-  const { mutateAsync: updateRecipe, isPending: isUpdating } = useUpdateRecipe({ onSuccess });
-  const {
-    mutateAsync: generateRecipeByUrl,
-    data: generatedRecipe,
-    isPending: isGeneratingRecipe,
-  } = useGenerateRecipeByUrl();
-
-  const { loadingForm } = useAppSelector((state) => state.recipes);
-  const [videoUrl, setVideoUrl] = useState("");
-  const [nameValue, setNameValue] = useState(title || "");
-  const [categoryValue, setCategoryValue] = useState<Category | undefined>(() => category);
-  const [timerValue, setTimerValue] = useState({
-    hours: cookingTimeInMinutes ? Math.floor(cookingTimeInMinutes / 60) : 0,
-    minutes: cookingTimeInMinutes ? cookingTimeInMinutes % 60 : 0,
-  });
-  const [description, setDescription] = useState(recipeDescription || "");
-  const [loadedPhotosInfo, setLoadedPhotosInfo] = useState<LoadedPhotos | undefined>(initialPhotosState);
-
+const RecipesForm = ({ recipe, method, onSuccess }: RecipesFormProps) => {
   const { user } = useAppSelector((state) => state.authentication);
-
   const isGenerateBtnActive = method === "POST" && user;
+  const { ingredients } = recipe || {};
 
-  const tags = useAppSelector((state) => state.createRecipeForm.tags);
-  const { data: categories } = useGetCategories({});
-
-  const dispatch = useAppDispatch();
-
-  useEffect(() => {
-    if (!generatedRecipe) return;
-
-    const category = categories?.find((cat) => cat.name === generatedRecipe.recipe.suggestedCategoryName);
-    const mainImage = generatedRecipe.recipe.images.find((img) => img.type === "MAIN");
-    const previewImage = generatedRecipe.recipe.images.find((img) => img.type === "PREVIEW");
-
-    setNameValue(generatedRecipe.recipe.title);
-    setDescription(generatedRecipe.recipe.description);
-    setCategoryValue(category);
-    setTimerValue({
-      hours: generatedRecipe.recipe.cookingTimeInMinutes
-        ? Math.floor(generatedRecipe.recipe.cookingTimeInMinutes / 60)
-        : 0,
-      minutes: generatedRecipe.recipe.cookingTimeInMinutes ? generatedRecipe.recipe.cookingTimeInMinutes % 60 : 0,
-    });
-
-    setLoadedPhotosInfo({
-      main: { src: mainImage?.imageUrl || "", id: mainImage?.id || "" },
-      preview: { src: previewImage?.imageUrl || "", id: previewImage?.id || "" },
-    });
-    dispatch(setAllIngredients(generatedRecipe.recipe.ingredients.map((ing) => ({ ...ing, id: nextId() }))));
-  }, [generatedRecipe, categories]);
-
-  useEffect(() => {
-    if (loadingForm === "succeeded" && method === "POST") {
-      setNameValue("");
-      setCategoryValue(undefined);
-      dispatch(clearAllTags());
-      setLoadedPhotosInfo(undefined);
-      setDescription("");
-      setTimerValue({ hours: 0, minutes: 0 });
-    }
-  }, [loadingForm]);
-
-  const handleSubmitForm = async (method: string) => {
-    if (!nameValue) {
-      alert("Введіть назву страви");
-      return;
-    }
-    if (!categoryValue) {
-      alert("Виберіть категорію страви");
-      return;
-    }
-    if (tags.length === 0) {
-      alert("Додайте інгредієнти");
-      return;
-    }
-    if (!timerValue.hours && !timerValue.minutes) {
-      alert("Вкажіть час приготування страви");
-      return;
-    }
-    if (!description) {
-      alert("Опишіть процес приготування страви");
-      return;
-    }
-
-    if (method === "POST") {
-      if (!loadedPhotosInfo || !loadedPhotosInfo.main || !loadedPhotosInfo.preview) {
-        alert("Завантажте 2 фото");
-        return;
-      }
-      createRecipe({
-        title: nameValue,
-        ingredients: tags,
-        description,
-        categoryId: categoryValue.id,
-        cookingTimeInMinutes: +timerValue.hours * 60 + +timerValue.minutes,
-        previewImage: loadedPhotosInfo.preview.uploadFile ?? loadedPhotosInfo.preview?.src,
-        mainImage: loadedPhotosInfo.main.uploadFile ?? loadedPhotosInfo.main?.src,
-      });
-    }
-    if (method === "UPDATE" && id) {
-      const newMain = loadedPhotosInfo?.main?.uploadFile;
-      const newPreview = loadedPhotosInfo?.preview?.uploadFile;
-
-      const newRecipe: PutUpdateRecipeReq = {
-        ...recipe,
-        title: nameValue,
-        ingredients: tags,
-        description,
-        categoryId: categoryValue.id,
-        cookingTimeInMinutes: +timerValue.hours * 60 + +timerValue.minutes,
-        ...(newMain && { mainImage: newMain }),
-        ...(newPreview && { previewImage: newPreview }),
-      };
-
-      updateRecipe({ id, body: newRecipe });
-    }
-  };
-
-  const options = [
-    ["bold", "italic", "underline", "strike"], // toggled buttons
-    ["blockquote"],
-    ["link", "image"],
-    [{ list: "ordered" }, { list: "bullet" }, { list: "check" }],
-    [{ script: "sub" }, { script: "super" }], // superscript/subscript
-    [{ indent: "-1" }, { indent: "+1" }], // outdent/indent
-    [{ size: ["small", false, "large", "huge"] }], // custom dropdown
-    [{ header: [1, 2, 3, 4, 5, 6, false] }],
-    [{ color: [] }, { background: [] }], // dropdown with defaults from theme
-    [{ font: [] }],
-    [{ align: [] }],
-    ["clean"],
-  ];
+  const {
+    handleSubmitForm,
+    nameValue,
+    handleChangeNameValue,
+    categoryValue,
+    setCategoryValue,
+    isGeneratingRecipe,
+    timerValue,
+    setTimerValue,
+    description,
+    setDescription,
+    generateRecipeByUrl,
+    categories,
+    loadedPhotoContextValue,
+    isCreating,
+    isUpdating,
+  } = useRecipesForm({ recipe, method, onSuccess });
 
   return (
     <form
       className="form add-recepie__form"
       onKeyDown={(e) => e.code === "Enter" && e.preventDefault()}
-      onSubmit={(e) => {
-        e.preventDefault();
-        handleSubmitForm(method);
-      }}
+      onSubmit={handleSubmitForm}
     >
       <div className="form__fields-wrapper">
         {isGenerateBtnActive && (
-          <div
-            className="relative mb-2 w-full max-w-[508px] overflow-hidden rounded-xl border bg-gradient-to-br from-accent-light via-light to-white p-5"
-            role="region"
-            aria-labelledby="ai-recipe-suggestion-title"
-          >
-            <div
-              className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-accent/10"
-              aria-hidden
-            />
-            <div
-              className="pointer-events-none absolute -bottom-6 left-1/3 h-20 w-20 rounded-full bg-accent/5"
-              aria-hidden
-            />
-
-            <div className="relative flex flex-col gap-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-medium text-ingredients">AI-генерація рецепта</span>
-              </div>
-
-              <div>
-                <h2 id="ai-recipe-suggestion-title" className="text-lg font-semibold leading-snug text-text">
-                  Заповніть рецепт з відео
-                </h2>
-                <p className="mt-1.5 text-sm leading-relaxed text-ingredients">
-                  Вставте посилання на TikTok або Instagram — форма заповниться автоматично.
-                </p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <span className="rounded-md border border-border-input/80 bg-light/80 px-2.5 py-1 text-xs font-medium text-text">
-                    TikTok
-                  </span>
-                  <span className="rounded-md border border-border-input/80 bg-light/80 px-2.5 py-1 text-xs font-medium text-text">
-                    Instagram
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-                <label className="flex min-w-0 flex-1 flex-col gap-2">
-                  <span className="text-sm font-semibold text-accent">Посилання на відео</span>
-                  <input
-                    className="form__input"
-                    type="url"
-                    name="videoUrl"
-                    placeholder="https://www.tiktok.com/..."
-                    value={videoUrl}
-                    onChange={(e) => setVideoUrl(e.target.value)}
-                    disabled={isGeneratingRecipe}
-                  />
-                </label>
-                <button
-                  type="button"
-                  className={cn(
-                    "relative shrink-0 rounded-lg bg-accent px-5 py-4 text-sm font-semibold text-light transition-colors hover:bg-accent-second focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:min-w-[200px]",
-                    (isGeneratingRecipe || !videoUrl.trim()) && "pointer-events-none opacity-70",
-                  )}
-                  disabled={isGeneratingRecipe || !videoUrl.trim()}
-                  onClick={() => generateRecipeByUrl(videoUrl)}
-                >
-                  {isGeneratingRecipe ? (
-                    <span className="addRecipe-btn__loading-dots absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-                      <span className="addRecipe-btn__loading-dot" />
-                      <span className="addRecipe-btn__loading-dot" />
-                      <span className="addRecipe-btn__loading-dot" />
-                    </span>
-                  ) : null}
-                  <span className={cn(isGeneratingRecipe && "opacity-0")}>Заповнити форму</span>
-                </button>
-              </div>
-            </div>
-          </div>
+          <AutoGenerationRecipe isGeneratingRecipe={isGeneratingRecipe} generateRecipeByUrl={generateRecipeByUrl} />
         )}
         <label className="form__name-label form__label">
           <span>Назва страви</span>
@@ -287,7 +56,7 @@ const RecipesForm = ({ recipe, method, onSuccess }: Props) => {
             type="text"
             name="Назва страви"
             value={nameValue}
-            onChange={(e) => setNameValue(e.target.value)}
+            onChange={handleChangeNameValue}
           />
         </label>
         <div className="form__field-category">
@@ -306,93 +75,18 @@ const RecipesForm = ({ recipe, method, onSuccess }: Props) => {
       </div>
       <div className="form__fields-wrapper">
         <Ingredients localingredients={ingredients} />
-        <fieldset className="form__timer-fiedls timer">
-          <legend className="form__label">Час приготування</legend>
-          <div className="timer__wrapper">
-            <label className="timer__label-hours">
-              <input
-                className="timer__input-hours form__input"
-                type="number"
-                name="години"
-                value={timerValue.hours}
-                placeholder="00"
-                onChange={(e) => {
-                  let { value } = e.target;
-                  if (+value < 0) {
-                    value = "0";
-                  }
-                  setTimerValue((prev) => {
-                    return {
-                      minutes: prev?.minutes || 0,
-                      hours: +value,
-                    };
-                  });
-                }}
-              />
-              <span>годин</span>
-            </label>
-            <label className="timer__label-minutes">
-              <input
-                className="timer__input-minutes form__input"
-                type="number"
-                name="хвилини"
-                value={timerValue.minutes}
-                placeholder="00"
-                onChange={(e) => {
-                  let { value } = e.target;
-                  if (+value > 59) {
-                    value = "59";
-                  } else if (+value < 0) {
-                    value = "0";
-                  }
-                  setTimerValue((prev) => {
-                    return {
-                      hours: prev?.hours || 0,
-                      minutes: +value,
-                    };
-                  });
-                }}
-              />
-              <span>хвилин</span>
-            </label>
-          </div>
-        </fieldset>
+        <CookingTime
+          timerValue={timerValue}
+          onChange={({ hours, minutes }: { hours: number; minutes: number }) => setTimerValue({ minutes, hours })}
+        />
       </div>
       <div className="form__fields-wrapper">
-        <LoadedPhotoContext.Provider
-          value={useMemo(() => {
-            return {
-              loadedPhotosInfo,
-              setLoadedPhotosInfo,
-            };
-          }, [loadedPhotosInfo, setLoadedPhotosInfo])}
-        >
+        <LoadedPhotoContext.Provider value={loadedPhotoContextValue}>
           <UploadPhotos />
         </LoadedPhotoContext.Provider>
       </div>
       <div className="form__fields-wrapper form-descr">
-        <span className="form-descr__title form__label">Процес приготування</span>
-        <ReactQuill
-          className="form-descr__editor"
-          placeholder="Опишіть процес приготування..."
-          theme="snow"
-          modules={{
-            toolbar: {
-              container: options,
-            },
-            imageCompress: {
-              quality: 0.6,
-              maxWidth: 400,
-              maxHeight: 300,
-              imageType: "image/jpeg",
-              debug: true,
-              suppressErrorLogging: false,
-              insertIntoEditor: undefined,
-            },
-          }}
-          value={description}
-          onChange={setDescription}
-        />
+        <RecipeDescriptionArea value={description} onChange={setDescription} />
       </div>
       <button className={`form__submit addRecipe-btn ${isCreating || isUpdating ? "loading" : ""}`} type="submit">
         {method === "POST" ? "Додати рецепт" : "Оновити рецепт"}

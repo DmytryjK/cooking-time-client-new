@@ -7,30 +7,25 @@ import RemoveRecipeByAdmin from "./RemoveRecipeByAdmin/RemoveRecipeByAdmin";
 import { ImageType, Recipe } from "../../types/type";
 import { useAppSelector } from "../../hooks/hooks";
 import { Star } from "../Star/Star";
-import "./RecipeListItem.scss";
 import { PAGE_ROUTES } from "../../config/page-routes";
+import { cn } from "../../utils/cn";
+import "./RecipeListItem.scss";
 
-type HandleAddToFavorite = (recipeId: string, isFavorite: boolean) => void;
-
-const RecipeListItem = ({
-  recipe,
-  addToFavorite,
-  index,
-  setIsCardAnimateEnd,
-  className = "",
-}: {
+interface RecipeListItemProps {
   recipe: Recipe;
   addToFavorite: HandleAddToFavorite;
   index: number;
   setIsCardAnimateEnd?: Dispatch<SetStateAction<boolean>>;
   className?: string;
-}) => {
-  const { ingredients, id, title, cookingTimeInMinutes, images, isFavorite, category } = recipe;
+}
+
+type HandleAddToFavorite = (recipeId: string, isFavorite: boolean) => void;
+
+const RecipeListItem = ({ recipe, addToFavorite, index, setIsCardAnimateEnd, className }: RecipeListItemProps) => {
+  const { ingredients, id, title, cookingTimeInMinutes, images, isFavorite, category, avgRating } = recipe;
   const previewImg = images?.find((img) => img.type === ImageType.preview);
-  const timerClass = cookingTimeInMinutes ? "recipe-card__timer active" : "recipe-card__timer";
   const { id: uid, role } = useAppSelector((state) => state.authentication.user) || {};
   const isAdmin = role === "admin";
-  const searchedTagFilled = useAppSelector((state) => state.recipes.searchedTagFilled);
   const navigate = useNavigate();
   const noderef = useRef(null);
   const [emblaRef] = useEmblaCarousel({ dragFree: true, duration: 1 });
@@ -40,7 +35,7 @@ const RecipeListItem = ({
   return (
     <LazyMotion features={domMax} strict>
       <m.div
-        className={`recipe-card ${className}`}
+        className={cn("recipe-card", className)}
         ref={noderef}
         initial={{ opacity: 0.5, y: 15, scale: 0.96, display: "none" }}
         layout
@@ -70,7 +65,7 @@ const RecipeListItem = ({
         }}
         onAnimationStart={() => setIsCardAnimateEnd && setIsCardAnimateEnd(false)}
       >
-        <RemoveRecipeByAdmin id={id} />
+        {isAdmin && <RemoveRecipeByAdmin id={id} />}
         <div className="recipe-card__wrapper">
           <NavLink className="recipe-card__img-wrapper" to={`${PAGE_ROUTES.RECIPE}/${id}`}>
             <LazyLoad width={290} height={290}>
@@ -85,25 +80,26 @@ const RecipeListItem = ({
           </NavLink>
           <div className="recipe-card__content-text">
             <h2 className="recipe-card__title" title={title}>
-              <NavLink to={`${PAGE_ROUTES}/${id}`}>
-                {title.length > 42 ? `${title.substring(0, 42)}...` : title}
-              </NavLink>
+              <NavLink to={`${PAGE_ROUTES.RECIPE}/${id}`}>{title}</NavLink>
             </h2>
             <div className="recipe-card__inner-wrapper">
               <div className="flex items-end justify-between gap-2">
-                <span className={timerClass}>
+                <span className={cn(cookingTimeInMinutes && "recipe-card__timer")}>
                   {hours > 0 && `${hours} год`} {minutes > 0 && `${minutes} хв`}
                 </span>
                 <span className="flex items-end gap-0.5">
-                  <span className="font-medium text-md leading-none">{recipe.avgRating}</span>
-                  <Star fill={recipe.avgRating / 5} />
+                  <span className="font-medium text-md leading-none">{avgRating}</span>
+                  <Star fill={avgRating / 5} />
                 </span>
               </div>
 
               <div className="recipe-card__product-tags-slider embla" ref={emblaRef}>
                 <ul className="recipe-card__product-tags product-tags embla__container">
                   {ingredients?.map((item) => (
-                    <li key={item.id} className={`product-tags__item embla__slide ${item.matched ? "matched" : ""}`}>
+                    <li
+                      key={item.id}
+                      className={`product-tags__item embla__slide select-none ${item.matched ? "matched" : ""}`}
+                    >
                       {item.name}
                     </li>
                   ))}
@@ -118,11 +114,7 @@ const RecipeListItem = ({
           type="button"
           aria-label="додати в обране"
           onClick={() => {
-            if (uid) {
-              addToFavorite(id, recipe.isFavorite);
-            } else {
-              navigate("/favorites");
-            }
+            uid ? addToFavorite(id, recipe.isFavorite) : navigate("/favorites");
           }}
         />
       </m.div>

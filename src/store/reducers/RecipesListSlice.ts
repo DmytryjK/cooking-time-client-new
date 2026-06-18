@@ -1,11 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import type { Recipe, TagsType, Loading } from "../../types/type";
-
-type PayloadActionFilter = {
-  searchInput: string;
-  searchTags: TagsType[];
-  searchCategories: string[];
-};
+import type { Recipe } from "../../types/type";
 
 export interface SearchedConstruction {
   userSearchTag: string;
@@ -16,10 +10,6 @@ type InitialStateRecipes = {
   filteredRecipes: Recipe[];
   searchedTagFilled: SearchedConstruction[];
   recipe: Recipe | null;
-  loadingRecipe: Loading;
-  loadingRecipes: Loading;
-  loadingForm: Loading;
-  removeRecipeLoading: Loading;
   error: null | unknown;
   removeRecipeError: null | unknown;
   searchedNameOfDishes: string;
@@ -30,10 +20,6 @@ const initialState: InitialStateRecipes = {
   filteredRecipes: [],
   searchedTagFilled: [],
   recipe: null,
-  loadingRecipe: "idle",
-  loadingRecipes: "idle",
-  loadingForm: "idle",
-  removeRecipeLoading: "idle",
   error: null,
   removeRecipeError: null,
   searchedNameOfDishes: "",

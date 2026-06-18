@@ -1,10 +1,8 @@
-import { FC, SetStateAction, useEffect, useState } from "react";
+import { FC, SetStateAction, useState } from "react";
 import { LazyMotion, domAnimation, m } from "framer-motion";
 import { Recipe } from "../../../../types/type";
 import RecipesForm from "../../../../shared-components/RecipesForm/RecipesForm";
-import { useAppSelector } from "../../../../hooks/hooks";
 import PopUp from "../../../../shared-components/PopUp/PopUp";
-import "react-quill/dist/quill.snow.css";
 import "./EditRecipeForm.scss";
 
 const EditRecipeForm: FC<{
@@ -12,14 +10,7 @@ const EditRecipeForm: FC<{
   setIsAttentionOpen: React.Dispatch<SetStateAction<boolean>>;
   setIsEditActive: React.Dispatch<SetStateAction<boolean>>;
 }> = ({ recipe, setIsAttentionOpen, setIsEditActive }) => {
-  const { loadingForm } = useAppSelector((state) => state.recipes);
   const [isSuccessPopUpShow, setIsSuccessPopUpShow] = useState(false);
-
-  useEffect(() => {
-    if (loadingForm === "succeeded") {
-      setIsSuccessPopUpShow(true);
-    }
-  }, [loadingForm]);
 
   return (
     <div className="edit-recipe">
