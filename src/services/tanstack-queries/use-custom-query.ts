@@ -9,6 +9,7 @@ type CustomQueryOptions<
 > = UseQueryOptions<TQueryFnData, TError, TData, TQueryKey> & {
   onSuccess?: (data: TData) => void;
   onError?: (error: TError) => void;
+  onSettled?: (data: TData | undefined, error: TError | null) => void;
 };
 
 export const useCustomQuery = <
@@ -19,11 +20,12 @@ export const useCustomQuery = <
 >({
   onSuccess,
   onError,
+  onSettled,
   ...config
 }: CustomQueryOptions<TQueryFnData, TError, TData, TQueryKey>) => {
   const props = useQuery(config);
 
-  const { isSuccess, data, isError, error } = props;
+  const { status, isSuccess, data, isError, error } = props;
 
   useEffect(() => {
     if (isSuccess && data !== undefined && onSuccess) {
@@ -37,5 +39,10 @@ export const useCustomQuery = <
     }
   }, [isError, error, onError]);
 
+  useEffect(() => {
+    if (onSettled && (status === "success" || status === "error")) {
+      onSettled(data, error);
+    }
+  }, [status, data]);
   return props;
 };

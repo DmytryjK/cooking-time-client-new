@@ -2,31 +2,24 @@ import { useEffect, useState } from "react";
 import { PAGE_ROUTES } from "../../config/page-routes";
 import { NavLink, useLocation } from "react-router-dom";
 import SearchForm from "./SearchForm/SearchForm";
-import { removeUser, setUser } from "../../store/reducers/AuthenticationSlice";
+import { setUser } from "../../store/reducers/AuthenticationSlice";
 import { useAppSelector, useAppDispatch } from "../../hooks/hooks";
 import logo from "../../assets/icons/logo.svg";
 import BurgerBtn from "./BurgerBtn/BurgerBtn";
 import "./Header.scss";
 import { useSignOut } from "../../queries/post-sign-out/post-sign-out.mutation";
-import Cookies from "js-cookie";
 
-const Header = () => {
+interface HeaderProps {
+  isSearchActive: boolean;
+}
+
+const Header = ({ isSearchActive }: HeaderProps) => {
   const { id: uid, email } = useAppSelector((state) => state.authentication.user) || {};
-  const [isShouldRenderSearch, setIsShouldRenderSearch] = useState(true);
   const [isBurgerOpen, setIsBurgerOpen] = useState(false);
   const { mutateAsync: logout } = useSignOut();
 
   const dispatch = useAppDispatch();
   const savedUser = localStorage.getItem("user");
-  const { pathname } = useLocation();
-
-  useEffect(() => {
-    if (pathname === "/" || pathname === "/favorites") {
-      setIsShouldRenderSearch(true);
-    } else {
-      setIsShouldRenderSearch(false);
-    }
-  }, [pathname]);
 
   useEffect(() => {
     if (!uid && savedUser) {
@@ -39,7 +32,7 @@ const Header = () => {
   };
 
   return (
-    <header className={`header ${isShouldRenderSearch ? "" : "search-disabled"}`}>
+    <header className={`header ${isSearchActive ? "" : "search-disabled"}`}>
       <div className="container">
         <div className="header__wrapper">
           <div className="header__left">
@@ -83,7 +76,7 @@ const Header = () => {
             </nav>
           </div>
           <div className="header__right">
-            {isShouldRenderSearch ? <SearchForm /> : null}
+            {isSearchActive ? <SearchForm /> : null}
             {email && (
               <span className="header__right-username">
                 Вітаємо,

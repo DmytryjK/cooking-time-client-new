@@ -7,20 +7,18 @@ import {
   searchInputValue,
   deleteAllTags,
   setResetFiltersByName,
-  activeCategories,
+  setSearchLoading,
 } from "../../../store/reducers/FiltersSlice";
 import loader from "../../../assets/icons/loader/loader.svg";
 import CustomSelect from "../../CustomSelect/CustomSelect";
 import debounce from "../../../helpers/debounce";
-import { Loading } from "../../../types/type";
 import "./SearchForm.scss";
 
 const SearchForm = () => {
   const dispatch = useAppDispatch();
   const { pathname } = useLocation();
   const [inputValue, setInputValue] = useState<string>("");
-  const [isSearchLoading, setIsSearchLoading] = useState<Loading>("idle");
-  const { searchInput, searchTags, searchCategories, isResetSearchFileters } = useAppSelector((state) => state.filters);
+  const { isResetSearchFileters, isSearchLoading } = useAppSelector((state) => state.filters);
   const [selectedOption, setSelectedOption] = useState<string | undefined>();
   const [isSelectOpen, setIsSelectOpen] = useState<boolean>(false);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -35,37 +33,13 @@ const SearchForm = () => {
     },
   ];
   const selectFields = searchTypes.map((field) => field.title);
-
-  const debounceSearch = useCallback(
-    debounce((searchInput, searchTags, searchCategories) => {
-      // dispatch(filterRecipes({ searchInput, searchTags, searchCategories }));
-      //       searchInputValue
-      // addSearchTag
-      // dispatch(searchInputValue(searchInput));
-      // dispatch(addSearchTag(searchTags));
-      // dispatch(activeCategories(searchCategories));
-      // dispatch(
-      //   filterFavoriteRecipes({
-      //     searchInput,
-      //     searchTags,
-      //     searchCategories,
-      //   }),
-      // );
-    }, 300),
-    [],
-  );
-
+  console.log(selectedOption, "selectedOption");
   const debouncedSearchName = useCallback(
     debounce((inputValue) => {
       dispatch(searchInputValue(inputValue));
-      setIsSearchLoading("succeeded");
     }, 300),
     [],
   );
-
-  useEffect(() => {
-    debounceSearch(searchInput, searchTags, searchCategories);
-  }, [searchInput, searchTags, searchCategories]);
 
   useEffect(() => {
     setInputValue("");
@@ -83,13 +57,13 @@ const SearchForm = () => {
     setInputValue("");
     dispatch(searchInputValue(""));
     dispatch(deleteAllTags());
+    dispatch(setSearchLoading(false));
   }, [pathname]);
 
   useEffect(() => {
     searchTypes.some((type) => {
       if (type.title === selectedOption) {
         if (type.id === 1) return undefined;
-        setIsSearchLoading("pending");
         debouncedSearchName(inputValue);
       }
       return undefined;
@@ -189,7 +163,7 @@ const SearchForm = () => {
           </button>
         )}
         <button className="searchForm__searchBtn" type="button" onClick={() => handleSearchClick(inputValue)}>
-          {isSearchLoading !== "pending" ? (
+          {!isSearchLoading && (
             <svg
               className="searchForm__searchBtn-icon"
               width="18"
@@ -210,10 +184,8 @@ const SearchForm = () => {
                 />
               </g>
             </svg>
-          ) : (
-            ""
           )}
-          {isSearchLoading === "pending" ? <img className="searchForm__loading" src={loader} alt="" /> : ""}
+          {isSearchLoading && <img className="searchForm__loading" src={loader} alt="" />}
         </button>
         <CustomSelect
           setValue={setSelectedOption}

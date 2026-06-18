@@ -14,8 +14,9 @@ import { Toaster } from "react-hot-toast";
 const Layout = () => {
   const dispatch = useAppDispatch();
   const user = useLoaderData() as Awaited<ReturnType<typeof layoutLoader>>;
-  const [isSearchActive, setIsSearchActive] = useState(true);
+
   const { pathname } = useLocation();
+  const isSearchActive = pathname === "/" || pathname === "/favorites";
 
   useEffect(() => {
     const token = Cookies.get("accessToken");
@@ -23,16 +24,9 @@ const Layout = () => {
     if (user) dispatch(setUser(user as User));
   }, [user]);
 
-  useEffect(() => {
-    if (pathname === "/" || pathname === "/favorites") {
-      setIsSearchActive(true);
-    } else {
-      setIsSearchActive(false);
-    }
-  }, [pathname]);
   return (
     <div className={`layout ${isSearchActive ? "" : "search-disable"}`}>
-      <Header />
+      <Header isSearchActive={isSearchActive} />
       <Suspense fallback={<LazyLoaderPage />}>
         <Outlet />
       </Suspense>
