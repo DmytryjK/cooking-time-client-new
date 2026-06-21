@@ -41,6 +41,7 @@ axiosPrivate.interceptors.response.use(
         return axiosPrivate(originalRequest);
       } catch (refreshError) {
         Cookies.remove("accessToken");
+        localStorage.clear();
         return Promise.reject(refreshError);
       }
     }
