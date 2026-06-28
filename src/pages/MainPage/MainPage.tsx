@@ -12,13 +12,12 @@ const MainPage = () => {
   const tags = useAppSelector((state) => state.filters.searchTags);
   const searchCategories = useAppSelector((state) => state.filters.searchCategories);
 
-  const { data, fetchNextPage, hasNextPage, isFetching, isFetchingNextPage, isLoading, isError, status } =
-    useGetRecipes({
-      search: searchValue,
-      ingredients: tags.map((tag) => tag.tagText),
-      categories: searchCategories,
-      limit: 12,
-    });
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError, status } = useGetRecipes({
+    search: searchValue,
+    ingredients: tags.map((tag) => tag.tagText),
+    categories: searchCategories,
+    limit: 12,
+  });
 
   const recipes = data?.pages.flatMap((page) => page.recipes) ?? [];
 
@@ -39,7 +38,7 @@ const MainPage = () => {
       <div className="container">
         <Filters title="Всі рецепти" currentPage="MAIN" isEmpty={status === "success" && recipes?.length === 0} />
         {isLoading ? <Loader /> : <RecipeList recipes={recipes} />}
-        {isFetching && (
+        {isFetchingNextPage && (
           <div className="mx-auto flex justify-center items-center my-4 font-semibold relative gap-1">
             <span className="animate-pulse">Завантаження рецептів...</span>{" "}
             <Loader className="static w-6 translate-x-0 translate-y-0" />
