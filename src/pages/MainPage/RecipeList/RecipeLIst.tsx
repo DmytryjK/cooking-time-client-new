@@ -5,7 +5,11 @@ import type { Recipe } from "../../../types/type";
 import { useToggleFavorite } from "../../../queries/post-toggle-favorite/post-toggle-favorite.mutation";
 import "./RecipeLIst.scss";
 
-const RecipeList = ({ recipes }: { recipes?: Recipe[] }) => {
+interface RecipeListProps {
+  recipes: Recipe[];
+}
+
+const RecipeList = ({ recipes }: RecipeListProps) => {
   const { mutateAsync: toggleFavorite } = useToggleFavorite();
 
   const handleAddFavorite = useCallback((recipeId: string, isfavorite: boolean) => {

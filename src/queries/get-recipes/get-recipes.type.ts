@@ -4,4 +4,5 @@ export interface GetRecipesProps {
   search?: string;
   ingredients?: string[];
   categories?: string[];
+  limit?: number;
 }

@@ -33,7 +33,7 @@ const SearchForm = () => {
     },
   ];
   const selectFields = searchTypes.map((field) => field.title);
-  console.log(selectedOption, "selectedOption");
+
   const debouncedSearchName = useCallback(
     debounce((inputValue) => {
       dispatch(searchInputValue(inputValue));

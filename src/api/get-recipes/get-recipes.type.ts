@@ -1,3 +1,8 @@
 import { Recipe } from "../../types/type";
 
-export type GetRecipesRes = Recipe[];
+export interface GetRecipesRes {
+  recipes: Recipe[];
+  totalCount: number;
+  page: number;
+  limit: number;
+}
